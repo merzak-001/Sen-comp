@@ -3,15 +3,14 @@ const path = require('path');
 const fs = require('fs');
 const XLSX = require('xlsx');
 
-const dbServer = process.env.DB_SERVER || process.env.SQL_SERVER_HOST || 'localhost\\SQLEXPRESS';
+const dbServer = process.env.DB_SERVER || process.env.SQL_SERVER_HOST || '192.168.1.253';
 const dbName = process.env.DB_NAME || process.env.SQL_SERVER_DATABASE || 'SensusSAPDB';
+const dbUser = process.env.DB_USER || 'sa';
+const dbPassword = process.env.DB_PASSWORD || '0000';
+
 let CONNECTION_STRING = process.env.DB_CONNECTION_STRING;
 if (!CONNECTION_STRING) {
-  if (process.env.DB_USER && process.env.DB_PASSWORD) {
-    CONNECTION_STRING = `server=${dbServer};Database=${dbName};UID=${process.env.DB_USER};PWD=${process.env.DB_PASSWORD};Driver={ODBC Driver 18 for SQL Server};TrustServerCertificate=Yes;`;
-  } else {
-    CONNECTION_STRING = `server=${dbServer};Database=${dbName};Trusted_Connection=Yes;Driver={ODBC Driver 18 for SQL Server};TrustServerCertificate=Yes;`;
-  }
+  CONNECTION_STRING = `server=${dbServer};Database=${dbName};UID=${dbUser};PWD=${dbPassword};Driver={ODBC Driver 17 for SQL Server};TrustServerCertificate=Yes;`;
 }
 const OS_APPRO_DIR = 'C:/Users/msai/OneDrive - Sensus Germany GmbH & Co. KG/Documents/OS-appro';
 
@@ -52,15 +51,15 @@ class SqlDatabase {
       `);
       return {
         connected: true,
-        server: 'localhost\\SQLEXPRESS',
-        database: 'SensusSAPDB',
+        server: dbServer,
+        database: dbName,
         stats: counts[0] || {}
       };
     } catch (err) {
       return {
         connected: false,
-        server: 'localhost\\SQLEXPRESS',
-        database: 'SensusSAPDB',
+        server: dbServer,
+        database: dbName,
         error: err.message,
         stats: {}
       };

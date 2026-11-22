@@ -1177,9 +1177,10 @@ app.get('/api/years', async (req, res) => {
       .filter(y => !isNaN(y) && y > 2000)
       .sort((a, b) => b - a);
 
-    // If years exist with data, use them. Include 2026/2025 as selectable options.
-    const combinedYears = Array.from(new Set([...distinctDataYears, 2026, 2025]))
-      .sort((a, b) => b - a);
+    // If years exist with data, prioritize them dynamically
+    const combinedYears = distinctDataYears.length > 0 
+      ? distinctDataYears 
+      : [2026, 2025, 2024];
 
     res.json({
       success: true,

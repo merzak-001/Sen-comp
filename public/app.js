@@ -420,13 +420,14 @@ async function loadAvailableYears() {
     }
   }
 
-  // If activeDataYears exists, prefer an active year with data if current selection has none
+  // Always default to the most recent year with data, or the latest available year
   if (AppState.activeDataYears && AppState.activeDataYears.length > 0) {
-    if (!AppState.activeDataYears.includes(AppState.selectedYear)) {
-      AppState.selectedYear = AppState.activeDataYears[0];
-      localStorage.setItem('sensus_year', AppState.selectedYear);
-    }
-  } else if (!AppState.availableYears.includes(AppState.selectedYear)) {
+    // Sort descending to ensure latest year is first
+    AppState.activeDataYears.sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
+    AppState.selectedYear = AppState.activeDataYears[0];
+    localStorage.setItem('sensus_year', AppState.selectedYear);
+  } else if (AppState.availableYears && AppState.availableYears.length > 0) {
+    AppState.availableYears.sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
     AppState.selectedYear = AppState.availableYears[0];
     localStorage.setItem('sensus_year', AppState.selectedYear);
   }
