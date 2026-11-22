@@ -1,0 +1,1130 @@
+[
+  {
+    "month": "01",
+    "target": 16413689.200000001,
+    "sum": 16413689.15,
+    "diff": 0.05,
+    "chosen": [
+      {
+        "acc": "17305019",
+        "desc": "CHARGES CONSTATEES D",
+        "val": 25233500,
+        "origVal": 252335
+      },
+      {
+        "acc": "17310015",
+        "desc": "COTISATION PATR  ACC",
+        "val": 14611960,
+        "origVal": 146119.6
+      },
+      {
+        "acc": "17300228",
+        "desc": "REMUNERATION DU PERS",
+        "val": 819724786,
+        "origVal": 8197247.86
+      },
+      {
+        "acc": "17310016",
+        "desc": "COTISATION PATR  RET",
+        "val": 128585262,
+        "origVal": 1285852.62
+      },
+      {
+        "acc": "17300013",
+        "desc": "DIVERS CHARGES A PAY",
+        "val": 132551500,
+        "origVal": 1325515
+      },
+      {
+        "acc": "17470319",
+        "desc": "RETENUES S/ PRET MAR",
+        "val": 250000,
+        "origVal": 2500
+      },
+      {
+        "acc": "17570021",
+        "desc": "CONTRIBUTION LOGEMEN",
+        "val": 5750656,
+        "origVal": 57506.56
+      },
+      {
+        "acc": "17760022",
+        "desc": "COTISATION PATR ASSU",
+        "val": 160731572,
+        "origVal": 1607315.72
+      },
+      {
+        "acc": "17570017",
+        "desc": "PROVISION CONGE",
+        "val": 75548767,
+        "origVal": 755487.67
+      },
+      {
+        "acc": "17470355",
+        "desc": "PROVISION ŒUVRE SOCI",
+        "val": 11501312,
+        "origVal": 115013.12
+      },
+      {
+        "acc": "17470303",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 6862000,
+        "origVal": 68620
+      },
+      {
+        "acc": "17470312",
+        "desc": "RETENUES  ASSURANCES",
+        "val": 1410000,
+        "origVal": 14100
+      },
+      {
+        "acc": "17460003",
+        "desc": "IRG SUR SALAIRES",
+        "val": 253907600,
+        "origVal": 2539076
+      },
+      {
+        "acc": "17470301",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 4700000,
+        "origVal": 47000
+      }
+    ]
+  },
+  {
+    "month": "02",
+    "target": 16777848.099999998,
+    "sum": 16777847.65,
+    "diff": 0.45,
+    "chosen": [
+      {
+        "acc": "17310121",
+        "desc": "CNAS \"RETENUES SECUR",
+        "val": 17251920,
+        "origVal": 172519.2
+      },
+      {
+        "acc": "17310016",
+        "desc": "COTISATION PATR  RET",
+        "val": 126514438,
+        "origVal": 1265144.38
+      },
+      {
+        "acc": "17310015",
+        "desc": "COTISATION PATR  ACC",
+        "val": 14376639,
+        "origVal": 143766.39
+      },
+      {
+        "acc": "17300228",
+        "desc": "REMUNERATION DU PERS",
+        "val": 885268276,
+        "origVal": 8852682.76
+      },
+      {
+        "acc": "17760022",
+        "desc": "COTISATION PATR ASSU",
+        "val": 316286092,
+        "origVal": 3162860.92
+      },
+      {
+        "acc": "17470306",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 47595600,
+        "origVal": 475956
+      },
+      {
+        "acc": "17460003",
+        "desc": "IRG SUR SALAIRES",
+        "val": 252869800,
+        "origVal": 2528698
+      },
+      {
+        "acc": "17470301",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 4700000,
+        "origVal": 47000
+      },
+      {
+        "acc": "17470302",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 3500000,
+        "origVal": 35000
+      },
+      {
+        "acc": "17470303",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 8162000,
+        "origVal": 81620
+      },
+      {
+        "acc": "17470312",
+        "desc": "RETENUES  ASSURANCES",
+        "val": 1260000,
+        "origVal": 12600
+      }
+    ]
+  },
+  {
+    "month": "03",
+    "target": 20697300.57,
+    "sum": 20697300.57,
+    "diff": 0,
+    "chosen": [
+      {
+        "acc": "17310015",
+        "desc": "COTISATION PATR  ACC",
+        "val": 14739404,
+        "origVal": 147394.04
+      },
+      {
+        "acc": "17300228",
+        "desc": "REMUNERATION DU PERS",
+        "val": 1327741641,
+        "origVal": 13277416.41
+      },
+      {
+        "acc": "17460003",
+        "desc": "IRG SUR SALAIRES",
+        "val": 257974900,
+        "origVal": 2579749
+      },
+      {
+        "acc": "17570021",
+        "desc": "CONTRIBUTION LOGEMEN",
+        "val": 6077643,
+        "origVal": 60776.43
+      },
+      {
+        "acc": "17470307",
+        "desc": "AIDE OEUVR SOC",
+        "val": 9300000,
+        "origVal": 93000
+      },
+      {
+        "acc": "17570017",
+        "desc": "PROVISION CONGE",
+        "val": 127521468,
+        "origVal": 1275214.68
+      },
+      {
+        "acc": "17470319",
+        "desc": "RETENUES S/ PRET MAR",
+        "val": 250000,
+        "origVal": 2500
+      },
+      {
+        "acc": "17310124",
+        "desc": "CNAS \"RETENUES ASSUR",
+        "val": 5895713,
+        "origVal": 58957.13
+      },
+      {
+        "acc": "17470320",
+        "desc": "RETENUES S/ PRET SPE",
+        "val": 1400000,
+        "origVal": 14000
+      },
+      {
+        "acc": "17310128",
+        "desc": "CHARGES SOCIALES A P",
+        "val": 75466216,
+        "origVal": 754662.16
+      },
+      {
+        "acc": "17470303",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 18072000,
+        "origVal": 180720
+      },
+      {
+        "acc": "17470312",
+        "desc": "RETENUES  ASSURANCES",
+        "val": 1275000,
+        "origVal": 12750
+      },
+      {
+        "acc": "17570018",
+        "desc": "PRIME DE PERFORMANCE",
+        "val": 217489072,
+        "origVal": 2174890.72
+      },
+      {
+        "acc": "17470302",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 3500000,
+        "origVal": 35000
+      },
+      {
+        "acc": "17470301",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 3000000,
+        "origVal": 30000
+      },
+      {
+        "acc": "17470322",
+        "desc": "RETENUES S/ FRAIS DE",
+        "val": 27000,
+        "origVal": 270
+      }
+    ]
+  },
+  {
+    "month": "04",
+    "target": 44398700.83,
+    "sum": 44398700.92,
+    "diff": 0.09,
+    "chosen": [
+      {
+        "acc": "17310015",
+        "desc": "COTISATION PATR  ACC",
+        "val": 15194110,
+        "origVal": 151941.1
+      },
+      {
+        "acc": "17300015",
+        "desc": "COMPTES TRANSITOIRES",
+        "val": 6966240,
+        "origVal": 69662.4
+      },
+      {
+        "acc": "17470319",
+        "desc": "RETENUES S/ PRET MAR",
+        "val": 250000,
+        "origVal": 2500
+      },
+      {
+        "acc": "17310121",
+        "desc": "CNAS \"RETENUES SECUR",
+        "val": 18232878,
+        "origVal": 182328.78
+      },
+      {
+        "acc": "17570018",
+        "desc": "PRIME DE PERFORMANCE",
+        "val": 3379395000,
+        "origVal": 33793950
+      },
+      {
+        "acc": "17470355",
+        "desc": "PROVISION ŒUVRE SOCI",
+        "val": 49406298,
+        "origVal": 494062.98
+      },
+      {
+        "acc": "17310016",
+        "desc": "COTISATION PATR  RET",
+        "val": 133708180,
+        "origVal": 1337081.8
+      },
+      {
+        "acc": "17570020",
+        "desc": "RETRAITE ANTICIPEE",
+        "val": 24703149,
+        "origVal": 247031.49
+      },
+      {
+        "acc": "17570019",
+        "desc": "PERSONNEL - GRATIFIC",
+        "val": 418853520,
+        "origVal": 4188535.2
+      },
+      {
+        "acc": "17470306",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 11651800,
+        "origVal": 116518
+      },
+      {
+        "acc": "17310017",
+        "desc": "COTISATION PATR  MUT",
+        "val": 60787067,
+        "origVal": 607870.67
+      },
+      {
+        "acc": "17570017",
+        "desc": "PROVISION CONGE",
+        "val": 52274853,
+        "origVal": 522748.53
+      },
+      {
+        "acc": "17470313",
+        "desc": "RETENUES FONDS D'AID",
+        "val": 101311778,
+        "origVal": 1013117.78
+      },
+      {
+        "acc": "17760022",
+        "desc": "COTISATION PATR ASSU",
+        "val": 167135219,
+        "origVal": 1671352.19
+      }
+    ]
+  },
+  {
+    "month": "05",
+    "target": 46376671.419999994,
+    "sum": 46376671.44,
+    "diff": 0.02,
+    "chosen": [
+      {
+        "acc": "17300228",
+        "desc": "REMUNERATION DU PERS",
+        "val": 2226563459,
+        "origVal": 22265634.59
+      },
+      {
+        "acc": "17310016",
+        "desc": "COTISATION PATR  RET",
+        "val": 543469308,
+        "origVal": 5434693.08
+      },
+      {
+        "acc": "17570020",
+        "desc": "RETRAITE ANTICIPEE",
+        "val": 10096498,
+        "origVal": 100964.98
+      },
+      {
+        "acc": "17470306",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 7687800,
+        "origVal": 76878
+      },
+      {
+        "acc": "17470311",
+        "desc": "RETENUES 2 %  \"MUTEG",
+        "val": 29571315,
+        "origVal": 295713.15
+      },
+      {
+        "acc": "17470303",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 6862000,
+        "origVal": 68620
+      },
+      {
+        "acc": "17760022",
+        "desc": "COTISATION PATR ASSU",
+        "val": 679336631,
+        "origVal": 6793366.31
+      },
+      {
+        "acc": "17470320",
+        "desc": "RETENUES S/ PRET SPE",
+        "val": 1427000,
+        "origVal": 14270
+      },
+      {
+        "acc": "17470308",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 32250000,
+        "origVal": 322500
+      },
+      {
+        "acc": "17310128",
+        "desc": "CHARGES SOCIALES A P",
+        "val": 227822692,
+        "origVal": 2278226.92
+      },
+      {
+        "acc": "17570018",
+        "desc": "PRIME DE PERFORMANCE",
+        "val": 453232060,
+        "origVal": 4532320.6
+      },
+      {
+        "acc": "17310121",
+        "desc": "CNAS \"RETENUES SECUR",
+        "val": 74109402,
+        "origVal": 741094.02
+      },
+      {
+        "acc": "17470319",
+        "desc": "RETENUES S/ PRET MAR",
+        "val": 1650000,
+        "origVal": 16500
+      },
+      {
+        "acc": "17570021",
+        "desc": "CONTRIBUTION LOGEMEN",
+        "val": 10096498,
+        "origVal": 100964.98
+      },
+      {
+        "acc": "17310123",
+        "desc": "CNAS \"RETENUES RETRA",
+        "val": 333492481,
+        "origVal": 3334924.81
+      }
+    ]
+  },
+  {
+    "month": "06",
+    "target": 22298430.54,
+    "sum": 22298430.58,
+    "diff": 0.04,
+    "chosen": [
+      {
+        "acc": "17300228",
+        "desc": "REMUNERATION DU PERS",
+        "val": 966728304,
+        "origVal": 9667283.04
+      },
+      {
+        "acc": "17470306",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 7832800,
+        "origVal": 78328
+      },
+      {
+        "acc": "17470313",
+        "desc": "RETENUES FONDS D'AID",
+        "val": 27163817,
+        "origVal": 271638.17
+      },
+      {
+        "acc": "17310125",
+        "desc": "CNAS \"RETENUES RETRA",
+        "val": 5048195,
+        "origVal": 50481.95
+      },
+      {
+        "acc": "17460003",
+        "desc": "IRG SUR SALAIRES",
+        "val": 441187600,
+        "origVal": 4411876
+      },
+      {
+        "acc": "17760022",
+        "desc": "COTISATION PATR ASSU",
+        "val": 277653731,
+        "origVal": 2776537.31
+      },
+      {
+        "acc": "17310121",
+        "desc": "CNAS \"RETENUES SECUR",
+        "val": 30289448,
+        "origVal": 302894.48
+      },
+      {
+        "acc": "17470322",
+        "desc": "RETENUES S/ FRAIS DE",
+        "val": 3000,
+        "origVal": 30
+      },
+      {
+        "acc": "17470308",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 29850000,
+        "origVal": 298500
+      },
+      {
+        "acc": "17470355",
+        "desc": "PROVISION ŒUVRE SOCI",
+        "val": 12976172,
+        "origVal": 129761.72
+      },
+      {
+        "acc": "17470301",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 6125000,
+        "origVal": 61250
+      },
+      {
+        "acc": "17310016",
+        "desc": "COTISATION PATR  RET",
+        "val": 222122991,
+        "origVal": 2221229.91
+      },
+      {
+        "acc": "17760019",
+        "desc": "CREDIT D'IMPOT ET AV",
+        "val": 196000000,
+        "origVal": 1960000
+      },
+      {
+        "acc": "17470303",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 6862000,
+        "origVal": 68620
+      }
+    ]
+  },
+  {
+    "month": "07",
+    "target": 26355995.18,
+    "sum": 26355995.19,
+    "diff": 0.01,
+    "chosen": [
+      {
+        "acc": "17310015",
+        "desc": "COTISATION PATR  ACC",
+        "val": 16220218,
+        "origVal": 162202.18
+      },
+      {
+        "acc": "17300228",
+        "desc": "REMUNERATION DU PERS",
+        "val": 1387285935,
+        "origVal": 13872859.35
+      },
+      {
+        "acc": "17760022",
+        "desc": "COTISATION PATR ASSU",
+        "val": 178422418,
+        "origVal": 1784224.18
+      },
+      {
+        "acc": "17570018",
+        "desc": "PRIME DE PERFORMANCE",
+        "val": 474677552,
+        "origVal": 4746775.52
+      },
+      {
+        "acc": "17570017",
+        "desc": "PROVISION CONGE",
+        "val": 369744078,
+        "origVal": 3697440.78
+      },
+      {
+        "acc": "17310121",
+        "desc": "CNAS \"RETENUES SECUR",
+        "val": 19464209,
+        "origVal": 194642.09
+      },
+      {
+        "acc": "17310125",
+        "desc": "CNAS \"RETENUES RETRA",
+        "val": 3243989,
+        "origVal": 32439.89
+      },
+      {
+        "acc": "17470312",
+        "desc": "RETENUES  ASSURANCES",
+        "val": 1290000,
+        "origVal": 12900
+      },
+      {
+        "acc": "17570021",
+        "desc": "CONTRIBUTION LOGEMEN",
+        "val": 9248660,
+        "origVal": 92486.6
+      },
+      {
+        "acc": "17310124",
+        "desc": "CNAS \"RETENUES ASSUR",
+        "val": 6488034,
+        "origVal": 64880.34
+      },
+      {
+        "acc": "17470306",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 2292800,
+        "origVal": 22928
+      },
+      {
+        "acc": "17310016",
+        "desc": "COTISATION PATR  RET",
+        "val": 142737934,
+        "origVal": 1427379.34
+      },
+      {
+        "acc": "17310017",
+        "desc": "COTISATION PATR  MUT",
+        "val": 23483692,
+        "origVal": 234836.92
+      },
+      {
+        "acc": "17470320",
+        "desc": "RETENUES S/ PRET SPE",
+        "val": 1000000,
+        "origVal": 10000
+      }
+    ]
+  },
+  {
+    "month": "08",
+    "target": 21333652.509999998,
+    "sum": 21333654.74,
+    "diff": 2.23,
+    "chosen": [
+      {
+        "acc": "17310015",
+        "desc": "COTISATION PATR  ACC",
+        "val": 23121655,
+        "origVal": 231216.55
+      },
+      {
+        "acc": "17300228",
+        "desc": "REMUNERATION DU PERS",
+        "val": 1013001660,
+        "origVal": 10130016.6
+      },
+      {
+        "acc": "17570021",
+        "desc": "CONTRIBUTION LOGEMEN",
+        "val": 6981453,
+        "origVal": 69814.53
+      },
+      {
+        "acc": "17460003",
+        "desc": "IRG SUR SALAIRES",
+        "val": 343740300,
+        "origVal": 3437403
+      },
+      {
+        "acc": "17310123",
+        "desc": "CNAS \"RETENUES RETRA",
+        "val": 124856888,
+        "origVal": 1248568.88
+      },
+      {
+        "acc": "17310121",
+        "desc": "CNAS \"RETENUES SECUR",
+        "val": 27745934,
+        "origVal": 277459.34
+      },
+      {
+        "acc": "17570017",
+        "desc": "PROVISION CONGE",
+        "val": 320987577,
+        "origVal": 3209875.77
+      },
+      {
+        "acc": "17470313",
+        "desc": "RETENUES FONDS D'AID",
+        "val": 29410076,
+        "origVal": 294100.76
+      },
+      {
+        "acc": "17470355",
+        "desc": "PROVISION ŒUVRE SOCI",
+        "val": 13962906,
+        "origVal": 139629.06
+      },
+      {
+        "acc": "17470303",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 480000,
+        "origVal": 4800
+      },
+      {
+        "acc": "17570020",
+        "desc": "RETRAITE ANTICIPEE",
+        "val": 6981453,
+        "origVal": 69814.53
+      },
+      {
+        "acc": "17310016",
+        "desc": "COTISATION PATR  RET",
+        "val": 203470572,
+        "origVal": 2034705.72
+      },
+      {
+        "acc": "17470301",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 18625000,
+        "origVal": 186250
+      }
+    ]
+  },
+  {
+    "month": "09",
+    "target": 19457074.159999996,
+    "sum": 19457074.2,
+    "diff": 0.04,
+    "chosen": [
+      {
+        "acc": "17300228",
+        "desc": "REMUNERATION DU PERS",
+        "val": 1088798431,
+        "origVal": 10887984.31
+      },
+      {
+        "acc": "17300015",
+        "desc": "COMPTES TRANSITOIRES",
+        "val": 4901000,
+        "origVal": 49010
+      },
+      {
+        "acc": "17305019",
+        "desc": "CHARGES CONSTATEES D",
+        "val": 108000000,
+        "origVal": 1080000
+      },
+      {
+        "acc": "17470320",
+        "desc": "RETENUES S/ PRET SPE",
+        "val": 1000000,
+        "origVal": 10000
+      },
+      {
+        "acc": "17310017",
+        "desc": "COTISATION PATR  MUT",
+        "val": 18145463,
+        "origVal": 181454.63
+      },
+      {
+        "acc": "17310125",
+        "desc": "CNAS \"RETENUES RETRA",
+        "val": 3490668,
+        "origVal": 34906.68
+      },
+      {
+        "acc": "17310121",
+        "desc": "CNAS \"RETENUES SECUR",
+        "val": 20944309,
+        "origVal": 209443.09
+      },
+      {
+        "acc": "17570017",
+        "desc": "PROVISION CONGE",
+        "val": 122384538,
+        "origVal": 1223845.38
+      },
+      {
+        "acc": "17760022",
+        "desc": "COTISATION PATR ASSU",
+        "val": 191989999,
+        "origVal": 1919899.99
+      },
+      {
+        "acc": "17470322",
+        "desc": "RETENUES S/ FRAIS DE",
+        "val": 19000,
+        "origVal": 190
+      },
+      {
+        "acc": "17470355",
+        "desc": "PROVISION ŒUVRE SOCI",
+        "val": 14003970,
+        "origVal": 140039.7
+      },
+      {
+        "acc": "17570020",
+        "desc": "RETRAITE ANTICIPEE",
+        "val": 7001985,
+        "origVal": 70019.85
+      },
+      {
+        "acc": "17470308",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 21650000,
+        "origVal": 216500
+      },
+      {
+        "acc": "17570021",
+        "desc": "CONTRIBUTION LOGEMEN",
+        "val": 7001985,
+        "origVal": 70019.85
+      },
+      {
+        "acc": "17470312",
+        "desc": "RETENUES  ASSURANCES",
+        "val": 1290000,
+        "origVal": 12900
+      },
+      {
+        "acc": "17470311",
+        "desc": "RETENUES 2 %  \"MUTEG",
+        "val": 20362347,
+        "origVal": 203623.47
+      },
+      {
+        "acc": "17460003",
+        "desc": "IRG SUR SALAIRES",
+        "val": 314723725,
+        "origVal": 3147237.25
+      }
+    ]
+  },
+  {
+    "month": "10",
+    "target": 24887731.99,
+    "sum": 24887613.54,
+    "diff": 118.45,
+    "chosen": [
+      {
+        "acc": "17310015",
+        "desc": "COTISATION PATR  ACC",
+        "val": 17504965,
+        "origVal": 175049.65
+      },
+      {
+        "acc": "17300015",
+        "desc": "COMPTES TRANSITOIRES",
+        "val": 12005485,
+        "origVal": 120054.85
+      },
+      {
+        "acc": "17300228",
+        "desc": "REMUNERATION DU PERS",
+        "val": 1776048395,
+        "origVal": 17760483.95
+      },
+      {
+        "acc": "17310124",
+        "desc": "CNAS \"RETENUES ASSUR",
+        "val": 7001938,
+        "origVal": 70019.38
+      },
+      {
+        "acc": "17310016",
+        "desc": "COTISATION PATR  RET",
+        "val": 154043705,
+        "origVal": 1540437.05
+      },
+      {
+        "acc": "17470307",
+        "desc": "AIDE OEUVR SOC",
+        "val": 31800000,
+        "origVal": 318000
+      },
+      {
+        "acc": "17470355",
+        "desc": "PROVISION ŒUVRE SOCI",
+        "val": 19139900,
+        "origVal": 191399
+      },
+      {
+        "acc": "17570017",
+        "desc": "PROVISION CONGE",
+        "val": 182084548,
+        "origVal": 1820845.48
+      },
+      {
+        "acc": "17570020",
+        "desc": "RETRAITE ANTICIPEE",
+        "val": 9569950,
+        "origVal": 95699.5
+      },
+      {
+        "acc": "17310125",
+        "desc": "CNAS \"RETENUES RETRA",
+        "val": 3500950,
+        "origVal": 35009.5
+      },
+      {
+        "acc": "17310128",
+        "desc": "CHARGES SOCIALES A P",
+        "val": 171964804,
+        "origVal": 1719648.04
+      },
+      {
+        "acc": "17570021",
+        "desc": "CONTRIBUTION LOGEMEN",
+        "val": 9569950,
+        "origVal": 95699.5
+      },
+      {
+        "acc": "17310123",
+        "desc": "CNAS \"RETENUES RETRA",
+        "val": 94526764,
+        "origVal": 945267.64
+      }
+    ]
+  },
+  {
+    "month": "11",
+    "target": 23618842.860000003,
+    "sum": 23618842.89,
+    "diff": 0.03,
+    "chosen": [
+      {
+        "acc": "17310015",
+        "desc": "COTISATION PATR  ACC",
+        "val": 23924877,
+        "origVal": 239248.77
+      },
+      {
+        "acc": "17300228",
+        "desc": "REMUNERATION DU PERS",
+        "val": 972119120,
+        "origVal": 9721191.2
+      },
+      {
+        "acc": "17300015",
+        "desc": "COMPTES TRANSITOIRES",
+        "val": 132065192,
+        "origVal": 1320651.92
+      },
+      {
+        "acc": "17470322",
+        "desc": "RETENUES S/ FRAIS DE",
+        "val": 38000,
+        "origVal": 380
+      },
+      {
+        "acc": "17310123",
+        "desc": "CNAS \"RETENUES RETRA",
+        "val": 129194285,
+        "origVal": 1291942.85
+      },
+      {
+        "acc": "17310017",
+        "desc": "COTISATION PATR  MUT",
+        "val": 40606351,
+        "origVal": 406063.51
+      },
+      {
+        "acc": "17760022",
+        "desc": "COTISATION PATR ASSU",
+        "val": 263173652,
+        "origVal": 2631736.52
+      },
+      {
+        "acc": "17470355",
+        "desc": "PROVISION ŒUVRE SOCI",
+        "val": 13227632,
+        "origVal": 132276.32
+      },
+      {
+        "acc": "17470223",
+        "desc": "RET COT RACHA FAR 2%",
+        "val": 5052106,
+        "origVal": 50521.06
+      },
+      {
+        "acc": "17470307",
+        "desc": "AIDE OEUVR SOC",
+        "val": 600000,
+        "origVal": 6000
+      },
+      {
+        "acc": "17310121",
+        "desc": "CNAS \"RETENUES SECUR",
+        "val": 28709802,
+        "origVal": 287098.02
+      },
+      {
+        "acc": "17470301",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 31650000,
+        "origVal": 316500
+      },
+      {
+        "acc": "17470313",
+        "desc": "RETENUES FONDS D'AID",
+        "val": 67677252,
+        "origVal": 676772.52
+      },
+      {
+        "acc": "17310016",
+        "desc": "COTISATION PATR  RET",
+        "val": 210538924,
+        "origVal": 2105389.24
+      },
+      {
+        "acc": "17460003",
+        "desc": "IRG SUR SALAIRES",
+        "val": 395031700,
+        "origVal": 3950317
+      },
+      {
+        "acc": "17470311",
+        "desc": "RETENUES 2 %  \"MUTEG",
+        "val": 45800396,
+        "origVal": 458003.96
+      },
+      {
+        "acc": "17470312",
+        "desc": "RETENUES  ASSURANCES",
+        "val": 2475000,
+        "origVal": 24750
+      }
+    ]
+  },
+  {
+    "month": "12",
+    "target": 18698570.82,
+    "sum": 18698570.81,
+    "diff": 0.01,
+    "chosen": [
+      {
+        "acc": "17300015",
+        "desc": "COMPTES TRANSITOIRES",
+        "val": 310673913,
+        "origVal": 3106739.13
+      },
+      {
+        "acc": "17305019",
+        "desc": "CHARGES CONSTATEES D",
+        "val": 717581452,
+        "origVal": 7175814.52
+      },
+      {
+        "acc": "17310015",
+        "desc": "COTISATION PATR  ACC",
+        "val": 16534543,
+        "origVal": 165345.43
+      },
+      {
+        "acc": "17310016",
+        "desc": "COTISATION PATR  RET",
+        "val": 145503991,
+        "origVal": 1455039.91
+      },
+      {
+        "acc": "17310121",
+        "desc": "CNAS \"RETENUES SECUR",
+        "val": 19841401,
+        "origVal": 198414.01
+      },
+      {
+        "acc": "17470301",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 3325000,
+        "origVal": 33250
+      },
+      {
+        "acc": "17470302",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 1000000,
+        "origVal": 10000
+      },
+      {
+        "acc": "17470306",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 3477800,
+        "origVal": 34778
+      },
+      {
+        "acc": "17470308",
+        "desc": "RETENUES SUR SALAIRE",
+        "val": 30000000,
+        "origVal": 300000
+      },
+      {
+        "acc": "17470311",
+        "desc": "RETENUES 2 %  \"MUTEG",
+        "val": 18273544,
+        "origVal": 182735.44
+      },
+      {
+        "acc": "17470313",
+        "desc": "RETENUES FONDS D'AID",
+        "val": 27410335,
+        "origVal": 274103.35
+      },
+      {
+        "acc": "17470320",
+        "desc": "RETENUES S/ PRET SPE",
+        "val": 500000,
+        "origVal": 5000
+      },
+      {
+        "acc": "17470355",
+        "desc": "PROVISION ŒUVRE SOCI",
+        "val": 496720143,
+        "origVal": 4967201.43
+      },
+      {
+        "acc": "17570017",
+        "desc": "PROVISION CONGE",
+        "val": 79014959,
+        "origVal": 790149.59
+      }
+    ]
+  }
+]

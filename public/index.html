@@ -1,0 +1,2284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SENSUS SPA — Système de Reporting Financier & Approvisionnements</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=20261013_tft_streamlined">
+</head>
+<body>
+  <!-- AUTHENTICATION OVERLAY / LOGIN MODAL -->
+  <div id="authOverlay" class="auth-overlay">
+    <div class="auth-modal">
+      <div class="auth-brand-box">
+        <img src="sensus.jpg" alt="SENSUS SPA" class="auth-logo-img">
+        <h2 class="auth-title">SENSUS SPA</h2>
+        <div class="auth-subtitle">Système d'Analyse Comptable & Financière</div>
+        <div class="auth-tagline">Portail Sécurisé • SCF & Rapprochement SAP</div>
+      </div>
+
+      <form id="authLoginForm" class="auth-form" onsubmit="return false;">
+        <div id="authErrorAlert" class="auth-error-alert" style="display:none;"></div>
+
+        <div class="auth-form-group">
+          <label for="authUsername" class="auth-label">Identifiant / Utilisateur</label>
+          <div class="auth-input-wrapper">
+            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="authUsername" class="auth-input" placeholder="Ex: admin ou khaled.kaddour" autocomplete="username" required autofocus>
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label for="authPassword" class="auth-label">Mot de passe</label>
+          <div class="auth-input-wrapper">
+            <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="authPassword" class="auth-input" placeholder="••••••••" autocomplete="current-password" required>
+            <button type="button" id="btnToggleAuthPwd" class="auth-pwd-toggle" title="Afficher/Masquer">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="btnSubmitLogin" class="auth-submit-btn">
+          <span>Se connecter</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </form>
+
+      <div class="auth-footer-info">
+        <span>Authentification sécurisée SENSUS SPA • Port 1450</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-logo-box">
+          <img src="sensus.jpg" alt="SENSUS SPA" class="brand-logo-img">
+        </div>
+        <div class="brand-info">
+          <h2>Analyse Comptable</h2>
+          <span>Contrôle & Synthèse SAP</span>
+        </div>
+        <button id="btnToggleSidebar" class="sidebar-toggle-btn" title="Réduire / Agrandir le menu" type="button" aria-label="Réduire ou agrandir le menu latéral">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- NOUVEAU : IMPORT & RAPPROCHEMENT EXCEL -->
+        <a href="#import" class="nav-item" data-page="page-import" title="Chargement & Rapprochement SAP">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span class="nav-label">Import & Rapprochement</span>
+          <span class="nav-badge-pill" id="sidebarReconcileBadge" style="display:none;"></span>
+        </a>
+
+        <a href="#doc9" class="nav-item active" data-page="page-doc9" title="Synthèse Appro (Doc 9)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span class="nav-label">Synthèse Appro (Doc 9)</span>
+        </a>
+
+        <a href="#achats" class="nav-item" data-page="page-achats">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          Dépenses Fournisseurs
+        </a>
+
+        <a href="#consommation" class="nav-item" data-page="page-consommation">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+          Achats Consommés (Cl. 60)
+        </a>
+
+        <a href="#stocks" class="nav-item" data-page="page-stocks">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          Situation des Stocks (Cl. 3)
+        </a>
+
+        <a href="#fiscalite" class="nav-item" data-page="page-fiscalite">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Débours & Douane (173/178)
+        </a>
+
+        <!-- DROPDOWN: ÉTATS FINANCIERS (SCF) -->
+        <div class="nav-dropdown" id="dropdownFinanciers">
+          <button class="nav-dropdown-toggle" id="btnDropdownFinanciers" type="button">
+            <span class="nav-dropdown-label">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              États Financiers (SCF)
+            </span>
+            <svg class="dropdown-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="nav-dropdown-menu" id="menuFinanciers">
+            <a href="#bilan" class="nav-subitem" data-page="page-bilan">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+              Bilan (Actif & Passif)
+            </a>
+            <a href="#tcr" class="nav-subitem" data-page="page-tcr">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              Compte de Résultat (TCR)
+            </a>
+            <a href="#balance" class="nav-subitem" data-page="page-balance">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="m3 7 9-4 9 4"/><path d="m3 17 9 4 9-4"/><path d="M6 10v6"/><path d="M18 10v6"/></svg>
+              Balance Générale (SAP)
+            </a>
+            <a href="#tft" class="nav-subitem" data-page="page-tft">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Flux de Trésorerie (TFT)
+            </a>
+          </div>
+        </div>
+
+
+        <a href="#fournisseurs" class="nav-item" data-page="page-fournisseurs">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Référentiel Fournisseurs
+        </a>
+
+        <a href="#parametres" class="nav-item" data-page="page-parametres">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Paramètres & Import Données
+          <span class="unit-current-badge" id="sidebarImportBadge" style="background: #0284c7; color: #fff;">SAP</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="db-pill">
+          <span class="pulse-dot"></span>
+          <span>Base : SQL Server (SensusSAPDB)</span>
+        </div>
+        <div class="legal-tag">
+          SENSUS SPA • Port 50
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN AREA -->
+    <main class="main-content">
+      <!-- TOP ACTION BAR -->
+      <header class="topbar no-print">
+        <div class="topbar-left">
+          <h1 id="topbarTitle">Note de Synthèse Approvisionnements (Document 9)</h1>
+          <span class="topbar-subtitle" id="topbarSubtitle">Dossier exécutif prêt pour présentation et impression A4</span>
+        </div>
+
+        <div class="topbar-right">
+          <div class="executive-controls-group">
+            <!-- EXERCICE FISCAL SELECTOR PILL (GLOBAL MASTER) -->
+            <div class="header-control-pill" id="topbarYearBox" title="Filtrer l'ensemble des données et états financiers par exercice fiscal">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span class="pill-label">Exercice :</span>
+              <select id="globalSelectYear" class="styled-header-select">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+
+            <!-- MOIS FISCAL SELECTOR PILL (GLOBAL MASTER) -->
+            <div class="header-control-pill" id="topbarMonthBox" title="Filtrer l'ensemble des données par mois ou afficher le cumul annuel">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="pill-label">Mois :</span>
+              <select id="globalSelectMonth" class="styled-header-select">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+
+            <!-- QUICK UNIT SELECTOR PILL -->
+            <div class="header-control-pill unit-pill-box">
+              <span class="pill-label">Devise :</span>
+              <div class="unit-pills">
+                <button class="unit-pill active" data-unit="KDA">KDA</button>
+                <button class="unit-pill" data-unit="DA">DA</button>
+                <button class="unit-pill" data-unit="MDA">MDA</button>
+              </div>
+            </div>
+
+            <!-- PERIOD SELECTOR (FOR DOC 9 & STOCKS) -->
+            <div class="header-control-pill" id="topbarPeriodBox" style="display:none;">
+              <span class="pill-label">Période :</span>
+              <select id="selectPeriod" class="styled-header-select">
+                <option value="AOUT_2026">Août 2026 (Document 9)</option>
+                <option value="SEPTEMBRE_2026">Septembre 2026 (SEP-26)</option>
+                <option value="T3_2026">T3 2026 (3e Trimestre)</option>
+                <option value="CUMUL_2026">Cumul Année 2026</option>
+              </select>
+            </div>
+
+            <!-- PRINT & EXPORT BUTTONS -->
+            <div class="header-actions-group">
+              <button class="btn btn-outline" id="btnPrintReport">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Imprimer A4
+              </button>
+              <button class="btn btn-primary" id="btnDownloadWord">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Télécharger Word (.docx)
+              </button>
+            </div>
+
+            <!-- USER AUTH BADGE & LOGOUT -->
+            <div class="header-user-badge" id="topbarUserBox" style="display:flex; align-items:center; gap:8px; margin-left:6px; padding-left:10px; border-left:1px solid #cbd5e1;">
+              <div class="user-avatar-pill" style="display:flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #e2e8f0; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; color:#1e293b;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span id="currentUserName">Utilisateur</span>
+                <span id="currentUserRoleBadge" class="badge" style="font-size:10px; padding:2px 6px; border-radius:10px; background:#0284c7; color:#fff;">Admin</span>
+              </div>
+              <button class="btn btn-outline" id="btnLogout" title="Se déconnecter" style="padding:5px 9px; font-size:11px; font-weight:600; color:#e11d48; border-color:#fecdd3; display:flex; align-items:center; gap:4px; background:#fff;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span>Quitter</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- SCROLLABLE CONTENT VIEW -->
+      <div class="content-scroll">
+
+        <!-- ============================================================ -->
+        <!-- PAGE 1: SYNTHÈSE APPRO (A4 PRINTABLE DOSSIER - DOCUMENT 9)   -->
+        <!-- ============================================================ -->
+        <section id="page-doc9" class="app-page active">
+          <div class="dossier-wrapper">
+            <!-- A4 PAPER CANVAS -->
+            <article class="a4-document" id="printableDossier">
+              
+              <!-- OFFICIAL SENSUS LETTERHEAD -->
+              <header class="doc-letterhead">
+                <div class="letterhead-top">
+                  <div class="letterhead-logo">
+                    <img src="sensus.jpg" alt="SENSUS SPA" class="doc-logo-img">
+                  </div>
+                  <div class="letterhead-service">
+                    <h2>DIRECTION DE L'EXPLOITATION & INDUSTRIE</h2>
+                    <h3>SERVICE APPROVISIONNEMENTS</h3>
+                  </div>
+                </div>
+
+                <div class="letterhead-company-box">
+                  <div class="company-grid">
+                    <div><strong>Siège :</strong> BP 02 route de Batna, El-Eulma</div>
+                    <div><strong>N° RC :</strong> 05B0086023</div>
+                    <div><strong>N° NIF :</strong> 000519008602385</div>
+                    <div><strong>N° NIS :</strong> 00519200158942</div>
+                    <div><strong>N° Article :</strong> 19208603930</div>
+                    <div><strong>Système Source :</strong> SAP R/3 (Sensus Algérie SPA 8660)</div>
+                  </div>
+                </div>
+
+                <div class="doc-main-title">
+                  <h1 id="docReportTitle">IX. APPROVISIONNEMENTS — MOIS D'AOÛT 2026</h1>
+                  <div class="doc-meta-bar">
+                    <span>Note de Synthèse de Gestion & États de Clôture</span>
+                    <span class="unit-flag">Unité : <strong id="docUnitFlag">KDA</strong></span>
+                  </div>
+                </div>
+              </header>
+
+              <!-- SECTION 1: NARRATIVE COMMENTARY & OBSERVATIONS (PREDEFINED + CUSTOM + DELETABLE) -->
+              <section class="doc-section">
+                <div class="section-title-bar">
+                  <div class="sec-title-left">
+                    <span class="sec-num">1</span>
+                    <h2>SYNTHÈSE DE LA PÉRIODE & COMMENTAIRES DE GESTION</h2>
+                  </div>
+                  <div class="sec-actions no-print">
+                    <button type="button" class="btn-sec-action" id="btnAddObservation" title="Ajouter une nouvelle observation">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Ajouter une observation
+                    </button>
+                    <button type="button" class="btn-sec-action btn-sec-reset" id="btnResetObservations" title="Rétablir les observations calculées automatiquement par SAP">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                      Rétablir prédéfinis
+                    </button>
+                  </div>
+                </div>
+
+                <!-- DYNAMIC OBSERVATIONS LIST -->
+                <div class="observations-wrapper" id="doc9ObservationsList">
+                  <!-- Dynamically rendered by app.js -->
+                </div>
+                
+                <span class="commentary-hint no-print">
+                  💡 Les commentaires ci-dessus sont calculés à partir des données SAP. Vous pouvez <strong>supprimer</strong> un point (🗑️), en <strong>ajouter manuellement</strong> (+), ou <strong>éditer le texte</strong> directement avant d'imprimer ou d'exporter vers Word (.docx).
+                </span>
+              </section>
+
+              <!-- SECTION 2: ACHATS CONSOMMÉS (SCF 60) -->
+              <section class="doc-section">
+                <div class="section-title-bar">
+                  <span class="sec-num">2</span>
+                  <h2>DÉCOMPOSITION DES ACHATS CONSOMMÉS (SCF CLASSE 60 / BOAL 4000)</h2>
+                </div>
+                <table class="report-table" id="tableDoc9Consommation">
+                  <thead>
+                    <tr>
+                      <th style="width:58%;">RUBRIQUE DE CONSOMMATION</th>
+                      <th class="text-right" style="width:24%;">VALEUR (<span class="col-unit">KDA</span>)</th>
+                      <th class="text-right" style="width:18%;">PART DU TOTAL</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </section>
+
+              <!-- SECTION 3: ACHATS FACTURÉS & FOURNISSEURS -->
+              <section class="doc-section">
+                <div class="section-title-bar">
+                  <span class="sec-num">3</span>
+                  <h2>FLUX D'ACHATS FACTURÉS & PRINCIPAUX FOURNISSEURS PARTENAIRES</h2>
+                </div>
+                <table class="report-table" id="tableDoc9Achats">
+                  <thead>
+                    <tr>
+                      <th style="width:58%;">TYPE DE FLUX & PARTENAIRE</th>
+                      <th class="text-right" style="width:24%;">VALEUR (<span class="col-unit">KDA</span>)</th>
+                      <th class="text-right" style="width:18%;">RATIO GLOBAL</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </section>
+
+              <!-- SECTION 4: TABLEAU DES STOCKS -->
+              <section class="doc-section">
+                <div class="section-title-bar">
+                  <span class="sec-num">4</span>
+                  <h2 id="titleDoc9Stocks">TABLEAU DE VENTILATION ET ÉVOLUTION DES STOCKS (AOÛT 2025 vs AOÛT 2026)</h2>
+                </div>
+                <table class="report-table" id="tableDoc9Stocks">
+                  <thead>
+                    <tr>
+                      <th style="width:36%;">RUBRIQUE DU STOCK (SCF CLASSE 3)</th>
+                      <th class="text-right" style="width:16%;" id="thDoc9StockN1">Août 2025 (<span class="col-unit">KDA</span>)</th>
+                      <th class="text-right" style="width:16%;" id="thDoc9StockN">Août 2026 (<span class="col-unit">KDA</span>)</th>
+                      <th class="text-right" style="width:18%;">ÉVOLUTION (<span class="col-unit">KDA</span>)</th>
+                      <th class="text-right" style="width:14%;">ÉVOLUTION (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </section>
+
+              <!-- SIGNATURE & APPROVAL BLOCK -->
+              <footer class="doc-signatures">
+                <div class="signature-box">
+                  <span class="sig-title">Le Chef de Service Approvisionnements</span>
+                  <div class="sig-space"></div>
+                  <span class="sig-date">Date & Visa :</span>
+                </div>
+                <div class="signature-box">
+                  <span class="sig-title">La Direction Générale SENSUS SPA</span>
+                  <div class="sig-space"></div>
+                  <span class="sig-date">Date & Visa :</span>
+                </div>
+              </footer>
+
+            </article>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- PAGE 2: ACHATS RÉALISÉS & FOURNISSEURS                       -->
+        <!-- ============================================================ -->
+        <section id="page-achats" class="app-page">
+          <div class="page-container">
+            <div class="filter-toolbar no-print">
+              <div class="search-box">
+                <input type="text" id="inputSearchInvoices" placeholder="Rechercher par Nº pièce, fournisseur..." class="form-input">
+              </div>
+              <div class="filter-group">
+                <select id="filterInvoiceYear" class="form-select" style="font-weight:700; color:#0369a1; min-width:130px;">
+                  <!-- Dynamically populated from available years -->
+                </select>
+                <select id="filterInvoiceMonth" class="form-select" style="font-weight:700; color:#0369a1; min-width:140px;">
+                  <!-- Dynamically populated from available months -->
+                </select>
+                <select id="filterMarket" class="form-select">
+                  <option value="ALL">Tous les marchés</option>
+                  <option value="LOCAL">Marché Local (DZD)</option>
+                  <option value="ETRANGER">Importations Étrangères</option>
+                </select>
+                <select id="filterCategory" class="form-select">
+                  <option value="ALL">Toutes les rubriques</option>
+                  <option value="PD">Pièces Détachées (PD)</option>
+                  <option value="MP">Matières Premières (MP)</option>
+                  <option value="MA">Matières Auxiliaires (MA)</option>
+                  <option value="S">Services (S)</option>
+                  <option value="EQUIP">Équipements (EQUIP)</option>
+                  <option value="PR">Pièces Rechange (PR)</option>
+                  <option value="GD">Compteurs GD (GD)</option>
+                  <option value="Diver">Divers (Diver)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- SUMMARY STATS -->
+            <div class="stats-banner mb-4">
+              <div class="stat-item">
+                <span class="stat-label">Total Dépenses Facturées</span>
+                <span class="stat-val font-mono" id="statAchatsTotal">0 KDA</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Part Achats Locaux</span>
+                <span class="stat-val font-mono text-emerald" id="statAchatsLocal">0 KDA</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Part Importations</span>
+                <span class="stat-val font-mono text-sky" id="statAchatsEtranger">0 KDA</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Nombre de Factures</span>
+                <span class="stat-val font-mono" id="statAchatsCount">0</span>
+              </div>
+            </div>
+
+            <!-- TOP SUPPLIERS TABLE -->
+            <div class="panel-card mb-4">
+              <div class="panel-header">
+                <h3>Classement Pareto des Fournisseurs Principaux</h3>
+                <span class="badge badge-sky" id="badgeSuppliersCount">Top Fournisseurs</span>
+              </div>
+              <div class="table-responsive">
+                <table class="report-table" id="tableSuppliersPage">
+                  <thead>
+                    <tr>
+                      <th style="width:8%;">Rang</th>
+                      <th style="width:38%;">Fournisseur</th>
+                      <th style="width:16%;">Marché</th>
+                      <th class="text-right" style="width:20%;">Dépense Nette HT (<span class="col-unit">KDA</span>)</th>
+                      <th class="text-right" style="width:18%;">Part / Total</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- DETAILED INVOICES TABLE -->
+            <div class="panel-card mb-4">
+              <div class="panel-header">
+                <h3>Détail des Pièces & Factures Fournisseurs (F.41)</h3>
+                <span class="badge badge-sky" id="badgeInvoicesFilterCount">0 factures</span>
+              </div>
+              <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                <table class="report-table" id="tableInvoicesPage">
+                  <thead>
+                    <tr>
+                      <th style="width:12%;">Nº Pièce</th>
+                      <th style="width:14%;">Affectation</th>
+                      <th style="width:28%;">Fournisseur</th>
+                      <th style="width:10%;">Marché</th>
+                      <th style="width:12%;">Catégorie</th>
+                      <th class="text-right" style="width:12%;">Montant Brut (<span class="col-unit">KDA</span>)</th>
+                      <th class="text-right" style="width:12%;">Dépense Nette HT (<span class="col-unit">KDA</span>)</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- PAGE 3: ACHATS CONSOMMÉS (SCF CLASSE 60 / BOAL 4000)         -->
+        <!-- ============================================================ -->
+        <section id="page-consommation" class="app-page">
+          <div class="page-container">
+            <div class="panel-card mb-4">
+              <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <h3>Soldes Cumulés des Comptes de Charges du Grand Livre (SCF Classe 60)</h3>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="unit-label">Exercice :</span>
+                  <select id="selectConsommationYear" class="form-select" style="font-weight:700; color:#0369a1; min-width:130px; padding:4px 8px; font-size:12px;">
+                    <!-- Populated dynamically -->
+                  </select>
+                  <span class="unit-label" style="margin-left:4px;">Mois :</span>
+                  <select id="selectConsommationMonth" class="form-select" style="font-weight:700; color:#0369a1; min-width:140px; padding:4px 8px; font-size:12px;">
+                    <!-- Populated dynamically -->
+                  </select>
+                  <span class="badge badge-sky" id="badgeConsommationSource">Source: FBL3N & Balance</span>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="report-table" id="tableChargesGLPage">
+                  <thead>
+                    <tr>
+                      <th style="width:14%;">Compte BOAL</th>
+                      <th style="width:14%;">Compte SCF (Dz)</th>
+                      <th style="width:36%;">Désignation de la Charge</th>
+                      <th class="text-right" style="width:18%;">Mouvements (<span class="col-unit">KDA</span>)</th>
+                      <th class="text-right" style="width:18%;">Solde Cumulé (<span class="col-unit">KDA</span>)</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- PAGE 4: SITUATION DES STOCKS (SCF CLASSE 3)                  -->
+        <!-- ============================================================ -->
+        <section id="page-stocks" class="app-page">
+          <div class="page-container">
+
+            <!-- KPI STATS BANNER -->
+            <div class="stats-banner mb-4">
+              <div class="stat-item">
+                <span class="stat-label" id="lblStockKpiN1">Stock N-1</span>
+                <span class="stat-val font-mono" id="statStockValN1">0 KDA</span>
+                <span style="font-size:11px; color:#64748b;" id="subStockKpiN1">Clôture exercice précédent</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label" id="lblStockKpiN">Stock Période N</span>
+                <span class="stat-val font-mono text-sky" id="statStockValN">0 KDA</span>
+                <span style="font-size:11px; color:#64748b;" id="subStockKpiN">Inventaire net clôturé</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Évolution Globale</span>
+                <span class="stat-val font-mono" id="statStockValDiff">0 KDA</span>
+                <span style="font-size:11px; color:#64748b;" id="subStockKpiDiff">Variation globale en valeur</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Taux d'Évolution</span>
+                <span class="stat-val font-mono" id="statStockValPct">0 %</span>
+                <span style="font-size:11px; color:#64748b;">Taux de progression / régression</span>
+              </div>
+            </div>
+
+            <!-- MAIN EXECUTIVE PANEL: SITUATION DES STOCKS (Conforme Réalisation SEP-26) -->
+            <div class="panel-card mb-4">
+              <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <h3 id="titleExecutiveStocksTable">Situation & Ventilation des Stocks (Modèle Réalisation SEP-26)</h3>
+                  <p style="font-size:12px; color:#64748b; margin:2px 0 0 0;" id="subExecutiveStocksTable">Tableau de synthèse et variation des stocks (Classe 3)</p>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <span class="unit-label">Exercice :</span>
+                  <select id="selectStocksYear" class="form-select" style="font-weight:700; color:#0369a1; min-width:130px; padding:4px 8px; font-size:12px;">
+                    <!-- Populated dynamically -->
+                  </select>
+                  <span class="unit-label" style="margin-left:4px;">Mois :</span>
+                  <select id="selectStocksMonth" class="form-select" style="font-weight:700; color:#0369a1; min-width:140px; padding:4px 8px; font-size:12px;">
+                    <!-- Populated dynamically -->
+                  </select>
+                  <span class="badge badge-emerald" id="badgeStocksPeriodLabel">Septembre 2026</span>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="report-table" id="tableExecutiveStocks">
+                  <thead>
+                    <tr>
+                      <th style="width:36%;">Rubrique du Stock</th>
+                      <th class="text-right" style="width:16%;" id="thExecStockN1">Sept- 2025 (<span class="col-unit">KDA</span>)</th>
+                      <th class="text-right" style="width:16%;" id="thExecStockN">Sept-- 2026 (<span class="col-unit">KDA</span>)</th>
+                      <th class="text-right" style="width:18%;">Évolution (<span class="col-unit">KDA</span>)</th>
+                      <th class="text-right" style="width:14%;">Évolution (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- SECONDARY PANEL: AUDIT COMPTABLE PAR COMPTE GRAND LIVRE -->
+            <div class="panel-card mb-4">
+              <div class="panel-header">
+                <div>
+                  <h3>Détail Comptable par Compte du Grand Livre (Classe 3 / BOAL 3000 & 7800)</h3>
+                  <p style="font-size:12px; color:#64748b; margin:2px 0 0 0;">Soldes initiaux, mouvements débits/crédits et valorisation par compte SAP</p>
+                </div>
+                <span class="badge badge-purple">Source: SQL Server SensusSAPDB</span>
+              </div>
+              <div class="table-responsive">
+                <table class="report-table" id="tableStocksGLPage">
+                  <thead>
+                    <tr>
+                      <th style="width:11%;">Compte BOAL</th>
+                      <th style="width:11%;">Compte SCF (Dz)</th>
+                      <th style="width:30%;">Désignation du Magasin / Article</th>
+                      <th class="text-right" style="width:12%;">Solde Initial</th>
+                      <th class="text-right" style="width:12%;">Entrées (Débits)</th>
+                      <th class="text-right" style="width:12%;">Sorties (Crédits)</th>
+                      <th class="text-right" style="width:12%;">Solde Final (<span class="col-unit">KDA</span>)</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- PAGE 5: DÉBOURS & DOUANE                                     -->
+        <!-- ============================================================ -->
+        <section id="page-fiscalite" class="app-page">
+          <div class="page-container">
+            <div class="stats-banner mb-4">
+              <div class="stat-item">
+                <span class="stat-label">Débours Transit & Douane (Cpte 17300015)</span>
+                <span class="stat-val font-mono text-purple" id="statFiscalDebours">0 KDA</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">TVA Récupérable (Cpte 1787)</span>
+                <span class="stat-val font-mono text-emerald" id="statFiscalTVA">0 KDA</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Retenues à la Source (Cpte 1971)</span>
+                <span class="stat-val font-mono text-rose" id="statFiscalRetenue">0 KDA</span>
+              </div>
+            </div>
+
+            <div class="panel-card mb-4">
+              <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <h3>Avances et Débours par Transitaire / Douane</h3>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="unit-label">Exercice :</span>
+                  <select id="selectFiscaliteYear" class="form-select" style="font-weight:700; color:#0369a1; min-width:130px; padding:4px 8px; font-size:12px;">
+                    <!-- Populated dynamically -->
+                  </select>
+                  <span class="unit-label" style="margin-left:4px;">Mois :</span>
+                  <select id="selectFiscaliteMonth" class="form-select" style="font-weight:700; color:#0369a1; min-width:140px; padding:4px 8px; font-size:12px;">
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="report-table" id="tableFiscalBrokers">
+                  <thead>
+                    <tr>
+                      <th style="width:65%;">Transitaire / Prestataire</th>
+                      <th class="text-right" style="width:35%;">Débours Réglés (<span class="col-unit">KDA</span>)</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- PAGE 6: PARAMÈTRES (SETTINGS PAGE)                           -->
+        <!-- ============================================================ -->
+        <section id="page-parametres" class="app-page">
+          <div class="page-container" style="max-width: 1400px; margin: 0 auto; padding: 20px 24px;">
+
+            <!-- PAGE INTRO BANNER -->
+            <div class="panel-card mb-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border: 1px solid #334155;">
+              <div class="panel-body" style="padding: 22px 26px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+                  <div>
+                    <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); padding: 4px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 700; color: #38bdf8; margin-bottom: 8px;">
+                      <span class="status-pulse-dot" style="background: #38bdf8;"></span>
+                      ALIMENTATION DIRECTE BASE DE DONNÉES SQL SERVER
+                    </div>
+                    <h2 style="font-size: 20px; font-weight: 800; color: #ffffff; margin: 0 0 6px 0; letter-spacing: -0.02em;">
+                      Paramètres & Importation des Données SAP
+                    </h2>
+                    <p style="font-size: 13px; color: #94a3b8; margin: 0; max-width: 860px; line-height: 1.5;">
+                      Chargez directement vos extractions Excel <strong>Grand Livre (FBL3N)</strong> et <strong>Balances Générales (RFSSLD00)</strong> dans la base de données <code>SensusSAPDB</code>. 
+                      Tout rechargement d'un mois écrase automatiquement l'ancienne période sans doublon et journalise les variations détectées. Le moteur de reporting et les états financiers (Bilan, TCR, TFT, Notes d'Approvisionnement) sont synchronisés en temps réel.
+                    </p>
+                  </div>
+                  <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+                    <span class="badge badge-emerald" id="badgeSqlDbStatus" style="font-size: 12px; padding: 6px 12px;">
+                      Connecté • SensusSAPDB
+                    </span>
+                    <span style="font-size: 11px; color: #94a3b8; font-family: var(--font-mono);" id="statDbInstance">localhost\SQLEXPRESS</span>
+                  </div>
+                </div>
+
+                <!-- LIVE MASTER DATABASE STATS BAR -->
+                <div class="stats-banner mt-4" style="margin-top: 18px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px 18px;">
+                  <div class="stat-item">
+                    <span class="stat-label" style="color: #94a3b8;">Plan Comptable (SCF / BOAL)</span>
+                    <span class="stat-val font-mono text-sky" style="font-size: 18px;" id="statDbChart">975</span>
+                    <span style="font-size: 11px; color: #64748b;">Comptes référencés</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label" style="color: #94a3b8;">Fournisseurs (Tiers)</span>
+                    <span class="stat-val font-mono text-emerald" style="font-size: 18px;" id="statDbSuppliers">127</span>
+                    <span style="font-size: 11px; color: #64748b;">Fiches actives</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label" style="color: #94a3b8;">Grand Livre (FBL3N)</span>
+                    <span class="stat-val font-mono text-purple" style="font-size: 18px;" id="statDbGL">0</span>
+                    <span style="font-size: 11px; color: #64748b;">Lignes d'écritures</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label" style="color: #94a3b8;">Balances Générales (RFSSLD00)</span>
+                    <span class="stat-val font-mono text-amber" style="font-size: 18px;" id="statDbBalances">0</span>
+                    <span style="font-size: 11px; color: #64748b;">Soldes de périodes</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- DUAL IMPORT CARDS (FBL3N & BALANCE) -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 20px; margin-bottom: 24px;">
+
+              <!-- CARD 1: FBL3N GRAND LIVRE IMPORT -->
+              <div class="panel-card" style="border-top: 4px solid #0284c7;">
+                <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px;">
+                  <div>
+                    <h3 class="import-card-title" style="display: flex; align-items: center; gap: 8px;">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                      1. Importation Grand Livre (FBL3N)
+                    </h3>
+                    <span class="import-card-sub">Écritures comptables détaillées • Remplacement automatique par mois</span>
+                  </div>
+                  <div class="import-mode-pill-group">
+                    <button type="button" class="mode-pill-btn active" id="btnModeFbl3nSingle">Fichier Unique</button>
+                    <button type="button" class="mode-pill-btn" id="btnModeFbl3nMulti">Fichiers Multiples (Lot)</button>
+                  </div>
+                </div>
+
+                <div class="panel-body" style="padding: 18px;">
+                  <!-- Dropzone -->
+                  <input type="file" id="fileInputFBL3N" accept=".xlsx,.xls" style="display: none;">
+                  <div class="upload-dropzone" id="dropzoneFBL3N">
+                    <div class="dropzone-icon">
+                      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <div class="dropzone-text" id="dropzoneTextFBL3N">
+                      <strong>Cliquez pour choisir</strong> ou glissez-déposez le fichier Excel FBL3N
+                    </div>
+                    <div class="dropzone-hint" id="dropzoneHintFBL3N">
+                      Fichier unique .xlsx ou .xls (ex: FBL3N_Avril.xlsx)
+                    </div>
+                  </div>
+
+                  <!-- File Queue List -->
+                  <div class="selected-files-queue" id="queueFBL3N" style="display: none;">
+                    <div class="queue-header">
+                      <span class="queue-title">Fichier(s) prêt(s) pour import (<span id="queueCountFBL3N">0</span>)</span>
+                      <button type="button" class="btn-text-danger" id="btnClearQueueFBL3N">Vider la liste</button>
+                    </div>
+                    <div class="queue-list" id="queueListFBL3N"></div>
+                  </div>
+
+                  <!-- Rule Box -->
+                  <div class="import-rule-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2" style="flex-shrink: 0; margin-top: 1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <div>
+                      <strong>Règle de gestion :</strong> Si un mois existe déjà en base, il est <em>automatiquement remplacé</em> pour éviter tout doublon. La variation nette de solde et le nombre de lignes modifiées sont immédiatement enregistrés et notifiés.
+                    </div>
+                  </div>
+
+                  <!-- Action Button -->
+                  <div class="import-card-actions">
+                    <button type="button" class="btn btn-primary btn-block" id="btnUploadFBL3N" disabled style="padding: 11px 18px; font-weight: 700; width: 100%;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      <span id="btnTextUploadFBL3N">Lancer l'Importation GL</span>
+                    </button>
+                  </div>
+
+                  <!-- Status in DB -->
+                  <div class="loaded-summary-bar">
+                    <span class="summary-label">État en Base :</span>
+                    <span class="summary-value" id="textFBL3NSummary">Chargement de la base...</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CARD 2: BALANCE RFSSLD00 IMPORT -->
+              <div class="panel-card" style="border-top: 4px solid #059669;">
+                <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px;">
+                  <div>
+                    <h3 class="import-card-title" style="display: flex; align-items: center; gap: 8px;">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2"><path d="M12 3v18"/><path d="m3 7 9-4 9 4"/><path d="m3 17 9 4 9-4"/><path d="M6 10v6"/><path d="M18 10v6"/></svg>
+                      2. Importation Balances Générales (RFSSLD00)
+                    </h3>
+                    <span class="import-card-sub">Soldes initiaux, mouvements & clôtures • RFSSLD00 SAP</span>
+                  </div>
+                  <div class="import-mode-pill-group">
+                    <button type="button" class="mode-pill-btn active" id="btnModeBalanceSingle">Fichier Unique</button>
+                    <button type="button" class="mode-pill-btn" id="btnModeBalanceMulti">Fichiers Multiples (Lot)</button>
+                  </div>
+                </div>
+
+                <div class="panel-body" style="padding: 18px;">
+                  <!-- Dropzone -->
+                  <input type="file" id="fileInputBalance" accept=".xls,.xlsx" style="display: none;">
+                  <div class="upload-dropzone" id="dropzoneBalance">
+                    <div class="dropzone-icon" style="color: #059669;">
+                      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <div class="dropzone-text" id="dropzoneTextBalance">
+                      <strong>Cliquez pour choisir</strong> ou glissez-déposez le fichier Balance Excel
+                    </div>
+                    <div class="dropzone-hint" id="dropzoneHintBalance">
+                      Fichier unique .xls ou .xlsx (ex: balance 102026.xls)
+                    </div>
+                  </div>
+
+                  <!-- Optional Period Override Field -->
+                  <div class="period-override-field" id="wrapBalancePeriodOverride">
+                    <label for="inputBalancePeriodOverride">Forcer la clé de période (optionnel si non détectée) :</label>
+                    <input type="text" id="inputBalancePeriodOverride" class="form-input" placeholder="Ex: 102026 ou 04/2026 (laisser vide pour auto-détection)" style="padding: 8px 12px; font-size: 12px;">
+                  </div>
+
+                  <!-- File Queue List -->
+                  <div class="selected-files-queue" id="queueBalance" style="display: none;">
+                    <div class="queue-header">
+                      <span class="queue-title">Balance(s) prête(s) pour import (<span id="queueCountBalance">0</span>)</span>
+                      <button type="button" class="btn-text-danger" id="btnClearQueueBalance">Vider la liste</button>
+                    </div>
+                    <div class="queue-list" id="queueListBalance"></div>
+                  </div>
+
+                  <!-- Rule Box -->
+                  <div class="import-rule-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" style="flex-shrink: 0; margin-top: 1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <div>
+                      <strong>Règle de gestion :</strong> Si la période existe déjà dans <code>GeneralLedgerBalances</code>, elle est remplacée par la nouvelle extraction. La différence sur les soldes cumulés est automatiquement journalisée.
+                    </div>
+                  </div>
+
+                  <!-- Action Button -->
+                  <div class="import-card-actions">
+                    <button type="button" class="btn btn-emerald btn-block" id="btnUploadBalance" disabled style="padding: 11px 18px; font-weight: 700; width: 100%;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      <span id="btnTextUploadBalance">Lancer l'Importation Balances</span>
+                    </button>
+                  </div>
+
+                  <!-- Status in DB -->
+                  <div class="loaded-summary-bar">
+                    <span class="summary-label">État en Base :</span>
+                    <span class="summary-value" id="textBalanceSummary" style="color: #059669;">Chargement de la base...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- GESTION & SUPPRESSION DES DONNÉES IMPORTÉES -->
+            <div class="panel-card mb-4" style="border: 1px solid #fed7aa; background: #fffaf5; margin-bottom: 24px;">
+              <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #fed7aa;">
+                <div>
+                  <h3 style="font-size: 15px; font-weight: 700; color: #9a3412; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    Gestion & Suppression des Données Importées
+                  </h3>
+                  <span style="font-size: 11.5px; color: #7c2d12;">Supprimez une période précise ou réinitialisez les données importées sans toucher au Plan Comptable ni aux Fournisseurs</span>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm" id="btnResetAllImports" style="font-size: 11.5px; padding: 6px 12px; font-weight: 700;">
+                  🗑️ Vider Tout (GL + Balances)
+                </button>
+              </div>
+
+              <div class="panel-body" style="padding: 16px 18px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px;">
+                  <!-- Delete FBL3N Section -->
+                  <div style="background: #ffffff; border: 1px solid #fdba74; border-radius: 8px; padding: 14px;">
+                    <div style="font-weight: 700; color: #9a3412; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                      <span class="status-pulse-dot" style="background: #ea580c;"></span>
+                      Supprimer des écritures Grand Livre (FBL3N)
+                    </div>
+                    <p style="font-size: 11.5px; color: #64748b; margin: 0 0 10px 0;">Sélectionnez une période ou videz tout le Grand Livre :</p>
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                      <select id="selectDeleteGLPeriod" class="form-input" style="padding: 6px 10px; font-size: 12px; flex: 1; min-width: 150px;">
+                        <option value="ALL">Toutes les périodes GL (Vider tout)</option>
+                      </select>
+                      <button type="button" class="btn btn-secondary btn-sm" id="btnDeleteGLPeriod" style="border-color: #ea580c; color: #c2410c; font-weight: 700;">
+                        Supprimer GL
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Delete Balance Section -->
+                  <div style="background: #ffffff; border: 1px solid #fdba74; border-radius: 8px; padding: 14px;">
+                    <div style="font-weight: 700; color: #9a3412; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                      <span class="status-pulse-dot" style="background: #ea580c;"></span>
+                      Supprimer des soldes de Balance (RFSSLD00)
+                    </div>
+                    <p style="font-size: 11.5px; color: #64748b; margin: 0 0 10px 0;">Sélectionnez une période ou videz toutes les balances :</p>
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                      <select id="selectDeleteBalancePeriod" class="form-input" style="padding: 6px 10px; font-size: 12px; flex: 1; min-width: 150px;">
+                        <option value="ALL">Toutes les balances (Vider tout)</option>
+                      </select>
+                      <button type="button" class="btn btn-secondary btn-sm" id="btnDeleteBalancePeriod" style="border-color: #ea580c; color: #c2410c; font-weight: 700;">
+                        Supprimer Balance
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- DIFF ALERTS & REPLACEMENTS LOG FEED -->
+            <div class="diff-notifications-section">
+              <div class="section-title-row" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  <h3 style="font-size: 15px; font-weight: 700; color: var(--navy); margin: 0;">
+                    Journal des Remplacements & Alertes d'Écarts
+                  </h3>
+                </div>
+                <span class="badge badge-amber" id="tagDiffAlertsCount">0 alerte</span>
+              </div>
+              <p style="font-size: 12px; color: #64748b; margin-top: 0; margin-bottom: 12px;">
+                Lorsqu'un mois ou une période est réimporté, cette section affiche en temps réel les remplacements effectués et les écarts détectés (différence de nombre de lignes ou variation de montant net).
+              </p>
+              <div class="diff-feed-list" id="feedDiffAlerts">
+                <div class="feed-empty-state">
+                  Aucun remplacement récent enregistré. Les modifications entre deux chargements d'un même mois s'afficheront ici.
+                </div>
+              </div>
+            </div>
+
+            <!-- ON-DEMAND RECONCILIATION AUDIT (GL vs BALANCE - LAST ELEMENT, HIDDEN BY DEFAULT) -->
+            <div class="panel-card" style="margin-top: 24px; border: 1px solid #cbd5e1;">
+              <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; padding: 16px 20px;">
+                <div>
+                  <h3 style="font-size: 16px; font-weight: 800; color: var(--navy); margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2"><path d="m16 16 2 2 4-4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                    Contrôle de Concordance & Rapprochement (GL FBL3N ⟷ Balance SAP)
+                  </h3>
+                  <span style="font-size: 12px; color: #64748b; display: block; margin-top: 2px;">
+                    Vérification optionnelle compte par compte • Affichée uniquement sur demande
+                  </span>
+                </div>
+
+                <!-- Launch / Refresh Controls -->
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 12px; font-weight: 700; color: #475569;">Exercice :</span>
+                    <select id="reconcileSelectYear" class="styled-header-select" style="padding: 5px 10px; font-size: 12px;">
+                      <option value="2026" selected>2026</option>
+                      <option value="2025">2025</option>
+                    </select>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 12px; font-weight: 700; color: #475569;">Mois :</span>
+                    <select id="reconcileSelectMonth" class="styled-header-select" style="padding: 5px 10px; font-size: 12px;">
+                      <option value="01">01 - Janvier</option>
+                      <option value="02">02 - Février</option>
+                      <option value="03">03 - Mars</option>
+                      <option value="04">04 - Avril</option>
+                      <option value="05">05 - Mai</option>
+                      <option value="06">06 - Juin</option>
+                      <option value="07">07 - Juillet</option>
+                      <option value="08">08 - Août</option>
+                      <option value="09">09 - Septembre</option>
+                      <option value="10" selected>10 - Octobre</option>
+                      <option value="11">11 - Novembre</option>
+                      <option value="12">12 - Décembre</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn btn-primary btn-sm" id="btnLaunchReconciliation" style="padding: 7px 14px; font-weight: 700;">
+                    🔍 Lancer le Contrôle de Concordance
+                  </button>
+                </div>
+              </div>
+
+              <!-- RECONCILIATION RESULTS CONTAINER (HIDDEN UNTIL USER REQUESTS IT) -->
+              <div id="wrapReconciliationResults" style="display: none; padding: 20px; border-top: 1px solid #e2e8f0;">
+                <!-- Global Reconciliation Status Banner -->
+                <div class="reconcile-status-banner" style="margin-bottom: 18px; padding: 14px 18px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <span class="reconcile-status-badge status-match" id="badgeGlobalReconciliation">
+                      CONCORDANCE
+                    </span>
+                    <span id="textGlobalReconcileStatus" style="font-size: 13.5px; font-weight: 700; color: #1e293b;">
+                      Calcul du statut en cours...
+                    </span>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnHideReconciliation" style="font-size: 11.5px;">
+                    ✕ Masquer le rapprochement
+                  </button>
+                </div>
+
+                <!-- 4 KPI Summary Cards -->
+                <div class="reconcile-kpis-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px;">
+                  <div class="kpi-card" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 12px 14px;">
+                    <div style="font-size: 11px; font-weight: 700; color: #0369a1; text-transform: uppercase;">Total Net Grand Livre (FBL3N)</div>
+                    <div style="font-size: 18px; font-weight: 800; color: #0284c7; margin-top: 4px; font-family: var(--font-mono);" id="kpiGLNet">0,00 DA</div>
+                    <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;" id="kpiGLDebCred">Débit: 0 | Crédit: 0</div>
+                  </div>
+
+                  <div class="kpi-card" style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 14px;">
+                    <div style="font-size: 11px; font-weight: 700; color: #047857; text-transform: uppercase;">Total Mouvements Balance (SAP)</div>
+                    <div style="font-size: 18px; font-weight: 800; color: #059669; margin-top: 4px; font-family: var(--font-mono);" id="kpiBalNet">0,00 DA</div>
+                    <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;" id="kpiBalDebCred">Débit: 0 | Crédit: 0</div>
+                  </div>
+
+                  <div class="kpi-card" style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 14px;">
+                    <div style="font-size: 11px; font-weight: 700; color: #b91c1c; text-transform: uppercase;">Écart Net GL ⟷ Balance</div>
+                    <div style="font-size: 18px; font-weight: 800; color: #ef4444; margin-top: 4px; font-family: var(--font-mono);" id="kpiNetDiscrepancy">0,00 DA</div>
+                    <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">Différence globale consolidée</div>
+                  </div>
+
+                  <div class="kpi-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px;">
+                    <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Comptes en Concordance</div>
+                    <div style="font-size: 18px; font-weight: 800; color: #1e293b; margin-top: 4px; font-family: var(--font-mono);" id="kpiAccountsRatio">0 / 0</div>
+                    <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;" id="kpiAccountsDetail">0 compte en écart détecté</div>
+                  </div>
+                </div>
+
+                <!-- Table Controls (Tabs & Search) -->
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+                  <div class="tab-btn-group" style="display: inline-flex; background: #f1f5f9; padding: 3px; border-radius: 8px; gap: 2px;">
+                    <button type="button" class="tab-btn active" data-reconcile-filter="all">
+                      Tous les comptes (<span id="countTabAll">0</span>)
+                    </button>
+                    <button type="button" class="tab-btn" data-reconcile-filter="mismatch" style="color: #dc2626;">
+                      ⚠️ Écarts uniquement (<span id="countTabMismatch">0</span>)
+                    </button>
+                    <button type="button" class="tab-btn" data-reconcile-filter="match" style="color: #059669;">
+                      ✓ Concordances (<span id="countTabMatch">0</span>)
+                    </button>
+                  </div>
+
+                  <div style="min-width: 260px;">
+                    <input type="text" id="inputSearchReconciliation" class="form-input" placeholder="🔍 Rechercher compte BOAL, SCF, libellé..." style="padding: 7px 12px; font-size: 12px; width: 100%;">
+                  </div>
+                </div>
+
+                <!-- Table -->
+                <div class="table-responsive" style="max-height: 480px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+                  <table class="table" id="tableReconciliation" style="font-size: 12px;">
+                    <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 2;">
+                      <tr>
+                        <th style="width: 100px;">Compte BOAL</th>
+                        <th style="width: 90px;">Compte SCF</th>
+                        <th>Libellé du Compte</th>
+                        <th class="num-col" style="width: 130px;">Mvt GL (FBL3N)</th>
+                        <th class="num-col" style="width: 130px;">Mvt Balance</th>
+                        <th class="num-col" style="width: 120px;">Écart (DA)</th>
+                        <th style="width: 100px; text-align: center;">Statut</th>
+                        <th style="width: 70px; text-align: center;">Détails</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tbodyReconciliation">
+                      <tr>
+                        <td colspan="8" style="text-align: center; padding: 32px; color: #64748b;">
+                          Cliquez sur « Lancer le Contrôle de Concordance » pour charger les comptes.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 6. BILAN COMPTABLE (ACTIF & PASSIF — SCF)   -->
+        <!-- ========================================== -->
+        <section id="page-bilan" class="app-page">
+          <div class="page-header">
+            <div class="page-header-info">
+              <div class="breadcrumb">
+                <span>États Financiers (SCF)</span>
+                <span class="bc-sep">/</span>
+                <span>Bilan Patrimonial</span>
+              </div>
+              <h1 id="bilanPageHeading">Bilan Comptable (Actif & Passif — SCF Algérie)</h1>
+              <p class="text-muted" id="bilanHeaderSubtitle">Situation patrimoniale officielle (Série G nº2) • Comparatif Exercice 2026 (N) vs 2025 (N-1).</p>
+            </div>
+            <div class="header-actions">
+              <div class="header-fiscal-pill" title="Changer l'exercice comptable affiché">
+                <span class="pill-icon">📅</span>
+                <label for="selectBilanYear">Exercice :</label>
+                <select id="selectBilanYear" class="styled-header-select">
+                  <!-- Dynamically populated -->
+                </select>
+              </div>
+              <div class="header-fiscal-pill" title="Filtrer par mois ou afficher le cumul annuel">
+                <span class="pill-icon">⏱️</span>
+                <label for="selectBilanMonth">Mois :</label>
+                <select id="selectBilanMonth" class="styled-header-select">
+                  <!-- Dynamically populated -->
+                </select>
+              </div>
+              <div class="source-toggle-group" id="bilanSourceToggle" title="Choisir la source des données comptables pour le Bilan">
+                <span class="source-toggle-label">Source :</span>
+                <button type="button" class="source-toggle-btn active" data-source="balance" id="btnBilanSourceBalance" title="Calculer à partir de la Balance Générale (RFSSLD00)">⚖️ Balance</button>
+                <button type="button" class="source-toggle-btn" data-source="gl" id="btnBilanSourceGL" title="Calculer à partir des écritures du Grand Livre (FBL3N)">📖 Grand Livre</button>
+              </div>
+              <div class="page-fiscal-badge" id="badgeBilanFiscalYears">
+                <span>Exercice N vs N-1</span>
+              </div>
+              <button class="btn btn-secondary" id="btnToggleBilanAccounts">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                Déplier Comptes SAP
+              </button>
+              <button class="btn btn-secondary" onclick="window.print()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Imprimer A4
+              </button>
+              <button class="btn btn-primary" id="btnRefreshBilan">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                Actualiser
+              </button>
+            </div>
+          </div>
+
+          <div class="page-body">
+            <!-- KPIS BANNER -->
+            <div class="stats-banner mb-4">
+              <div class="stat-item">
+                <span class="stat-label" id="lblKpiActifNet">Total Actif Net (2026)</span>
+                <span class="stat-val font-mono text-sky" id="kpiActifNet26">—</span>
+                <span style="font-size:11px; color:#64748b;" id="kpiActifNet25Sub">vs N-1 : —</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label" id="lblKpiCapitaux">Capitaux Propres (2026)</span>
+                <span class="stat-val font-mono text-emerald" id="kpiCapitauxPropres">—</span>
+                <span style="font-size:11px; color:#64748b;" id="kpiCapitauxPropresSub">Ressources stables</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label" id="lblKpiFRNG">Fonds de Roulement (FRNG 2026)</span>
+                <span class="stat-val font-mono text-purple" id="kpiFRNG">—</span>
+                <span style="font-size:11px; color:#64748b;" id="kpiFRNGSub">Marge de sécurité</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label" id="lblKpiEquilibre">Équilibre Actif / Passif</span>
+                <span class="stat-val font-mono text-emerald" id="kpiBilanEquilibre">Équilibré ✓</span>
+                <span style="font-size:11px; color:#64748b;" id="kpiBilanDiff">Écart : 0,00 DA</span>
+              </div>
+            </div>
+
+            <!-- TABS SWITCHER -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+              <div class="btn-group" role="group" id="bilanViewTabs">
+                <button type="button" class="btn btn-sm btn-primary bilan-tab-btn active" data-view="all">Vue Complète (Actif & Passif)</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary bilan-tab-btn" data-view="actif">Actif Uniquement</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary bilan-tab-btn" data-view="passif">Passif Uniquement</button>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="badge badge-emerald">Conforme Liasse Fiscale (Série G nº2)</span>
+                <span class="badge badge-slate" id="badgeBilanUnit">Unité : DA</span>
+              </div>
+            </div>
+
+            <!-- ACTIF PANEL -->
+            <div class="panel-card mb-4" id="panelActif">
+              <div class="panel-header" style="background: linear-gradient(90deg, #f0f9ff 0%, #ffffff 100%); border-bottom: 2px solid #0284c7;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:15px; font-weight:800; color:#0369a1;">BILAN ACTIF (Emplois & Patrimoine)</span>
+                  <span class="badge badge-sky" id="badgeTotalActifBadge">Actif Net : —</span>
+                </div>
+                <span style="font-size:12px; color:#64748b;">Série G, nº2 (Page 1)</span>
+              </div>
+              <div class="table-responsive">
+                <table class="report-table" id="tableBilanActif">
+                  <thead>
+                    <tr>
+                      <th style="width:70px; text-align:center;">Code</th>
+                      <th>Rubriques de l'Actif</th>
+                      <th style="width:130px; text-align:right;" id="thBilanActifBrutN">Brut (N)<br><span class="col-unit" style="font-size:10px; font-weight:normal;">DA</span></th>
+                      <th style="width:130px; text-align:right;">Amort. / Prov.<br><span class="col-unit" style="font-size:10px; font-weight:normal;">DA</span></th>
+                      <th style="width:130px; text-align:right;" id="thBilanActifNetN">Net (N)<br><span class="col-unit" style="font-size:10px; font-weight:normal;">DA</span></th>
+                      <th style="width:130px; text-align:right;" id="thBilanActifNetN1">Net (N-1)<br><span class="col-unit" style="font-size:10px; font-weight:normal;">DA</span></th>
+                      <th style="width:90px; text-align:right;" id="thBilanActifEvolPct">Évol. %</th>
+                      <th style="width:95px; text-align:center;">Détail</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bilanActifTableBody">
+                    <!-- Populated dynamically via app.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- PASSIF PANEL -->
+            <div class="panel-card mb-4" id="panelPassif">
+              <div class="panel-header" style="background: linear-gradient(90deg, #f0fdf4 0%, #ffffff 100%); border-bottom: 2px solid #16a34a;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:15px; font-weight:800; color:#15803d;">BILAN PASSIF (Ressources & Capitaux)</span>
+                  <span class="badge badge-emerald" id="badgeTotalPassifBadge">Passif Total : —</span>
+                </div>
+                <span style="font-size:12px; color:#64748b;">Série G, nº2 (Page 2)</span>
+              </div>
+              <div class="table-responsive">
+                <table class="report-table" id="tableBilanPassif">
+                  <thead>
+                    <tr>
+                      <th style="width:70px; text-align:center;">Code</th>
+                      <th>Rubriques du Passif</th>
+                      <th style="width:160px; text-align:right;" id="thBilanPassifN">Montant (N)<br><span class="col-unit" style="font-size:10px; font-weight:normal;">DA</span></th>
+                      <th style="width:160px; text-align:right;" id="thBilanPassifN1">Montant (N-1)<br><span class="col-unit" style="font-size:10px; font-weight:normal;">DA</span></th>
+                      <th style="width:100px; text-align:right;" id="thBilanPassifEvolPct">Évol. %</th>
+                      <th style="width:95px; text-align:center;">Détail</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bilanPassifTableBody">
+                    <!-- Populated dynamically via app.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 7. COMPTE DE RÉSULTAT (TCR — SCF ALGÉRIE)  -->
+        <!-- ========================================== -->
+        <section id="page-tcr" class="app-page">
+          <div class="page-header">
+            <div class="page-header-info">
+              <div class="breadcrumb">
+                <span>États Financiers SCF</span>
+                <span class="bc-sep">/</span>
+                <span>Compte de Résultat</span>
+              </div>
+              <h1 id="tcrPageHeading">Tableau des Comptes de Résultats (TCR)</h1>
+              <p class="text-muted" id="tcrHeaderSubtitle">Soldes Intermédiaires de Gestion (SIG) de SENSUS SPA : Production, Consommation, VA, EBE, Résultat Opérationnel et Résultat Net.</p>
+            </div>
+            <div class="header-actions">
+              <div class="header-fiscal-pill" title="Changer l'exercice comptable affiché">
+                <span class="pill-icon">📅</span>
+                <label for="selectTCRYear">Exercice :</label>
+                <select id="selectTCRYear" class="styled-header-select">
+                  <!-- Dynamically populated -->
+                </select>
+              </div>
+              <div class="header-fiscal-pill" title="Filtrer par mois ou afficher le cumul annuel">
+                <span class="pill-icon">⏱️</span>
+                <label for="selectTCRMonth">Mois :</label>
+                <select id="selectTCRMonth" class="styled-header-select">
+                  <!-- Dynamically populated -->
+                </select>
+              </div>
+              <div class="source-toggle-group" id="tcrSourceToggle" title="Choisir la source des données comptables pour le TCR">
+                <span class="source-toggle-label">Source :</span>
+                <button type="button" class="source-toggle-btn active" data-source="balance" id="btnTcrSourceBalance" title="Calculer à partir de la Balance Générale (RFSSLD00)">⚖️ Balance</button>
+                <button type="button" class="source-toggle-btn" data-source="gl" id="btnTcrSourceGL" title="Calculer à partir des écritures du Grand Livre (FBL3N)">📖 Grand Livre</button>
+              </div>
+              <div class="page-fiscal-badge" id="badgeTcrFiscalYears">
+                <span>Exercice N vs N-1</span>
+              </div>
+              <button class="btn btn-secondary" id="btnToggleTcrAccounts">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                Déplier Comptes SAP
+              </button>
+              <button class="btn btn-secondary" onclick="window.print()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Imprimer A4
+              </button>
+              <button class="btn btn-primary" id="btnRefreshTCR">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                Actualiser
+              </button>
+            </div>
+          </div>
+
+          <div class="page-body">
+            <!-- KPIS CARDS -->
+            <div class="stats-banner mb-4">
+              <div class="stat-item">
+                <span class="stat-label" id="lblKpiTcrCA">Chiffre d'Affaires (70)</span>
+                <span class="stat-val font-mono text-sky" id="kpiTcrCA">—</span>
+                <span style="font-size:11px; color:#64748b;" id="kpiTcrCADiff">vs N-1: —</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label" id="lblKpiTcrVA">Valeur Ajoutée (VA)</span>
+                <span class="stat-val font-mono text-emerald" id="kpiTcrVA">—</span>
+                <span style="font-size:11px; color:#64748b;" id="kpiTcrVATaux">Taux de VA: —</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label" id="lblKpiTcrEBE">Excédent Brut Exploitation (EBE)</span>
+                <span class="stat-val font-mono text-purple" id="kpiTcrEBE">—</span>
+                <span style="font-size:11px; color:#64748b;" id="kpiTcrEBEMarge">Marge EBE: —</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label" id="lblKpiTcrRN">Résultat Net de l'Exercice</span>
+                <span class="stat-val font-mono text-emerald" id="kpiTcrRN">—</span>
+                <span style="font-size:11px; color:#64748b;" id="kpiTcrRNMarge">Marge Nette: —</span>
+              </div>
+            </div>
+
+            <!-- COMPARATIVE TCR TABLE -->
+            <div class="panel-card mb-4">
+              <div class="panel-header">
+                <div>
+                  <h3 id="tcrTableMainTitle">Tableau des Comptes de Résultats Conforme SCF Algérie</h3>
+                  <span style="font-size:12px; color:#64748b;" id="tcrTableSubtitle">Société : <strong>SENSUS ALGERIE SPA</strong> | Comparatif N vs N-1</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="badge badge-emerald">Grand Livre RFSSLD00</span>
+                  <span class="badge badge-slate" id="badgeTcrUnit">Unité : KDA</span>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="report-table" id="tableTCR">
+                  <thead>
+                    <tr>
+                      <th style="width:65px; text-align:center;">Réf.</th>
+                      <th>Postes & Soldes Intermédiaires de Gestion</th>
+                      <th style="width:130px; text-align:right;" id="thTcrColN">Exercice N<br><span class="col-unit" style="font-size:10px; font-weight:normal;">KDA</span></th>
+                      <th style="width:85px; text-align:right;" id="thTcrRatioN">% CA (N)</th>
+                      <th style="width:130px; text-align:right;" id="thTcrColN1">Exercice N-1<br><span class="col-unit" style="font-size:10px; font-weight:normal;">KDA</span></th>
+                      <th style="width:120px; text-align:right;" id="thTcrDiff">Variation (Δ)<br><span class="col-unit" style="font-size:10px; font-weight:normal;">KDA</span></th>
+                      <th style="width:90px; text-align:right;" id="thTcrPct">Évol. %</th>
+                      <th style="width:95px; text-align:center;">Comptes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tcrTableBody">
+                    <!-- Populated dynamically via app.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 7c. BALANCE GÉNÉRALE (SAP RFSSLD00)         -->
+        <!-- ========================================== -->
+        <section id="page-balance" class="app-page">
+          <div class="page-header">
+            <div class="page-header-info">
+              <div class="breadcrumb">
+                <span>États Financiers SCF</span>
+                <span class="bc-sep">/</span>
+                <span>Balance Générale</span>
+              </div>
+              <h1>Balance Générale des Comptes (SAP RFSSLD00)</h1>
+              <p class="text-muted">Importation sécurisée, contrôle d'égalité Débit/Crédit et consultation du Grand Livre pour tous les exercices.</p>
+            </div>
+            <div class="header-actions">
+              <div class="header-control-pill" title="Sélectionner la balance de l'exercice ou du mois">
+                <span class="pill-label">Période :</span>
+                <select id="selectBalancePeriod" class="styled-header-select">
+                  <option value="">Chargement des balances...</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" id="btnGoToImportBalance" type="button" onclick="window.navigateToPage && window.navigateToPage('page-import');" title="Importer des balances (un ou plusieurs fichiers)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Importer Balances Excel
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI HIGHLIGHTS STRIP -->
+          <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 20px;">
+            <div class="kpi-card">
+              <div class="kpi-icon-wrapper" style="background:#f1f5f9; color:#0f172a;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+              </div>
+              <div class="kpi-content">
+                <span class="kpi-title">Comptes Répertoriés</span>
+                <span class="kpi-value" id="kpiBalAccounts">—</span>
+                <span class="kpi-trend text-muted" id="kpiBalSourceFile">Fichier source</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon-wrapper" style="background:#ecfdf5; color:#059669;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div class="kpi-content">
+                <span class="kpi-title">Report Initial (N-1)</span>
+                <span class="kpi-value" id="kpiBalOpening">—</span>
+                <span class="kpi-trend text-muted">Solde d'ouverture</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon-wrapper" style="background:#eff6ff; color:#2563eb;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </div>
+              <div class="kpi-content">
+                <span class="kpi-title">Total Débit Période</span>
+                <span class="kpi-value" id="kpiBalDebit">—</span>
+                <span class="kpi-trend text-muted">Flux entrants / Débits</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon-wrapper" style="background:#fef2f2; color:#dc2626;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 21 3 21 3 15"/><line x1="14" y1="10" x2="3" y2="21"/></svg>
+              </div>
+              <div class="kpi-content">
+                <span class="kpi-title">Total Crédit Période</span>
+                <span class="kpi-value" id="kpiBalCredit">—</span>
+                <span class="kpi-trend text-muted">Flux sortants / Crédits</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon-wrapper" style="background:#f8fafc; color:#0f172a;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div class="kpi-content">
+                <span class="kpi-title">Solde Cumulé (N)</span>
+                <span class="kpi-value" id="kpiBalClosing">—</span>
+                <span class="kpi-trend text-muted">Solde de clôture</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon-wrapper" id="iconBalEquilibre" style="background:#ecfdf5; color:#059669;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="kpi-content">
+                <span class="kpi-title">Contrôle d'Équilibre</span>
+                <span class="kpi-value" id="kpiBalEquilibre" style="font-size:15px;">0,00 DA ✓</span>
+                <span class="kpi-trend" id="kpiBalEquilibreSub">Débit = Crédit</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- IMPORTED BALANCES PERIODS CARDS -->
+          <div class="dashboard-card" style="margin-bottom:20px;">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <h3 class="card-title">Balances Enregistrées dans la Base de Données (SQL Server)</h3>
+                <p class="card-subtitle">Historique des fichiers de balances RFSSLD00 importés avec intégrité comptable vérifiée.</p>
+              </div>
+              <button class="btn btn-sm btn-secondary" id="btnRefreshBalancePeriods" type="button">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+                Rafraîchir
+              </button>
+            </div>
+            <div class="card-body">
+              <div id="balancePeriodsList" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px;">
+                <!-- Populated dynamically via app.js -->
+              </div>
+            </div>
+          </div>
+
+          <!-- INTERACTIVE TRIAL BALANCE TABLE -->
+          <div class="dashboard-card">
+            <div class="card-header" style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px;">
+              <div>
+                <h3 class="card-title" id="balTableHeading">Détail des Comptes de la Balance</h3>
+                <p class="card-subtitle">Grand Livre général avec correspondance SCF et variations de la période.</p>
+              </div>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="text" id="inputBalanceSearch" class="styled-search-input" placeholder="Rechercher compte ou libellé..." style="width:240px; padding:6px 12px; border-radius:6px; border:1px solid #cbd5e1; font-size:12px;" />
+                <button class="btn btn-sm btn-secondary" id="btnExportBalanceCSV" type="button" title="Exporter au format CSV">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Export CSV
+                </button>
+              </div>
+            </div>
+
+            <!-- CLASS FILTER PILLS -->
+            <div style="padding:10px 20px; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+              <span style="font-size:12px; font-weight:600; color:#475569; margin-right:4px;">Classes SCF :</span>
+              <button class="filter-pill active" data-class="" type="button">Toutes les classes</button>
+              <button class="filter-pill" data-class="1" type="button">Cl. 1 : Capitaux</button>
+              <button class="filter-pill" data-class="2" type="button">Cl. 2 : Immo</button>
+              <button class="filter-pill" data-class="3" type="button">Cl. 3 : Stocks</button>
+              <button class="filter-pill" data-class="4" type="button">Cl. 4 : Tiers</button>
+              <button class="filter-pill" data-class="5" type="button">Cl. 5 : Trésorerie</button>
+              <button class="filter-pill" data-class="6" type="button">Cl. 6 : Charges</button>
+              <button class="filter-pill" data-class="7" type="button">Cl. 7 : Produits</button>
+            </div>
+
+            <div class="card-body" style="padding:0;">
+              <div class="table-responsive" style="max-height:650px; overflow-y:auto;">
+                <table class="report-table" id="tableBalanceGrid">
+                  <thead style="position:sticky; top:0; z-index:10; background:#0f172a; color:#ffffff;">
+                    <tr>
+                      <th style="width:110px; text-align:left;">Cpte gén. (BOAL)</th>
+                      <th style="width:110px; text-align:left;">Cpte SCF (DZ)</th>
+                      <th>Intitulé du compte</th>
+                      <th style="width:130px; text-align:right;">Report Solde (N-1)</th>
+                      <th style="width:130px; text-align:right;">Débit Période</th>
+                      <th style="width:130px; text-align:right;">Crédit Période</th>
+                      <th style="width:140px; text-align:right;">Solde Cumulé (N)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="balanceTableBody">
+                    <!-- Populated dynamically via app.js -->
+                  </tbody>
+                  <tfoot style="position:sticky; bottom:0; z-index:10; background:#0f172a; color:#ffffff; font-weight:bold;">
+                    <tr>
+                      <td colspan="3" style="text-align:left;">TOTAL GÉNÉRAL DE LA BALANCE</td>
+                      <td style="text-align:right;" id="tfBalOpening">0,00 DA</td>
+                      <td style="text-align:right;" id="tfBalDebit">0,00 DA</td>
+                      <td style="text-align:right;" id="tfBalCredit">0,00 DA</td>
+                      <td style="text-align:right;" id="tfBalClosing">0,00 DA</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 7b. TABLEAU DES FLUX DE TRÉSORERIE (TFT)   -->
+        <!-- ========================================== -->
+        <section id="page-tft" class="app-page">
+          <div class="page-header">
+            <div class="page-header-info">
+              <div class="breadcrumb">
+                <span>États Financiers SCF</span>
+                <span class="bc-sep">/</span>
+                <span>Flux de Trésorerie</span>
+              </div>
+              <h1 id="tftPageHeading">Tableau des Flux de Trésorerie (TFT)</h1>
+              <p class="text-muted" id="tftHeaderSubtitle">Méthode Directe Officielle SCF Algérie • Flux de trésorerie opérationnels (A), d'investissement (B) et de financement (C).</p>
+            </div>
+            <div class="header-actions">
+              <div class="page-fiscal-badge" id="badgeTFTFiscalYears" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; padding:6px 14px; border-radius:6px; font-weight:600; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+                <span style="font-size:13px;">📅</span>
+                <span id="badgeTFTFiscalText">Exercice 2026 (N) vs 2025 (N-1)</span>
+              </div>
+              <!-- Hidden select elements preserved for ID compatibility -->
+              <select id="selectTFTYear" style="display:none;"></select>
+              <select id="selectTFTMonth" style="display:none;"></select>
+              <button class="btn btn-secondary" onclick="window.print()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Imprimer A4
+              </button>
+              <button class="btn btn-primary" id="btnRefreshTFT">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                Actualiser
+              </button>
+            </div>
+          </div>
+
+          <div class="page-body">
+            <!-- KPIS CARDS -->
+            <div class="stats-banner mb-4">
+              <div class="stat-item">
+                <span class="stat-label" id="lblKpiTFTFluxOp">Flux Opérationnels (A)</span>
+                <span class="stat-val font-mono text-sky" id="kpiTFTFluxOpA">—</span>
+                <span style="font-size:11px; color:#64748b;" id="kpiTFTFluxOpASub">Note 408 • Exploitation</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label" id="lblKpiTFTFluxInv">Flux Investissement (B)</span>
+                <span class="stat-val font-mono text-purple" id="kpiTFTFluxInvB">—</span>
+                <span style="font-size:11px; color:#64748b;" id="kpiTFTFluxInvBSub">Note 416 • Immobilisations & DAT</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label" id="lblKpiTFTFluxFin">Flux Financement (C)</span>
+                <span class="stat-val font-mono text-amber" id="kpiTFTFluxFinC">—</span>
+                <span style="font-size:11px; color:#64748b;" id="kpiTFTFluxFinCSub">Note 422 • Dividendes & Change</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label" id="lblKpiTFTVarNet">Variation Nette (A+B+C)</span>
+                <span class="stat-val font-mono text-navy" id="kpiTFTVarNet">—</span>
+                <span style="font-size:11px; color:#64748b;" id="kpiTFTVarNetSub">Note 424 • Flux de période</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label" id="lblKpiTFTCloture">Trésorerie de Clôture</span>
+                <span class="stat-val font-mono text-emerald" id="kpiTFTCloture">—</span>
+                <div style="font-size:11px; margin-top:2px;">
+                  <span class="badge badge-emerald" id="kpiTFTEquilibreBadge" style="font-weight:700;">Équilibré ✓ (0,00 DA)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- STREAMLINED VIEW SWITCHER -->
+            <div class="tft-nav-toolbar mb-3">
+              <div class="tft-segmented-control" id="tftModeTabs">
+                <button type="button" class="tft-mode-btn active" id="btnTftModeMonthly" data-tft-mode="monthly">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Grille Mensuelle (12 Mois)
+                </button>
+                <button type="button" class="tft-mode-btn" id="btnTftModeComparative" data-tft-mode="comparative">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                  Synthèse Annuelle (N vs N-1)
+                </button>
+                <button type="button" class="tft-mode-btn" id="btnTftModeCharts" data-tft-mode="charts">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/><circle cx="12" cy="4" r="1.5"/></svg>
+                  Tableau de Bord & Santé 📊
+                </button>
+              </div>
+
+              <div class="tft-toolbar-status">
+                <span class="tft-scf-badge">✓ Méthode Directe SCF</span>
+              </div>
+            </div>
+
+            <!-- MAIN TFT TABLE CONTAINER (SHOWN IN MONTHLY & COMPARATIVE MODES) -->
+            <div class="card p-0 shadow-sm border-0 mb-4" id="tftTableCard" style="background:#fff; border-radius:8px; overflow:hidden;">
+              <div class="tft-grid-container" id="tftGridContainer" title="Cliquez et glissez horizontalement pour faire défiler">
+                <table class="report-table tft-grid-table" id="tableTFT">
+                  <thead id="tftTableHead">
+                    <!-- Dynamic header generated by app.js (12 months or comparative) -->
+                  </thead>
+                  <tbody id="tftTableBody">
+                    <!-- Populated dynamically via app.js -->
+                  </tbody>
+                </table>
+              </div>
+              <div class="tft-table-footer">
+                <span class="text-muted"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polyline points="15 18 9 12 15 6"/></svg> Défilement horizontal fluide (glisser ou roulette)</span>
+                <span id="tftFooterBalanceNotice" class="tft-footer-eq">Équilibre Trésorerie : <strong>Conforme SCF (Écart = 0,00 DA)</strong></span>
+              </div>
+            </div>
+
+            <!-- CHARTS & VISUAL ANALYTICS CONTAINER (SHOWN IN CHARTS MODE) -->
+            <div id="tftChartsContainer" style="display:none;" class="mb-4">
+              <!-- EXECUTIVE SITUATION & STRATEGIC INSIGHTS PANEL -->
+              <div class="panel-card mb-3" style="background:#ffffff; border-radius:8px; border:1px solid #cbd5e1; padding:12px 16px; box-shadow:0 1px 4px rgba(15,23,42,0.05);">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:8px; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:15px;">💡</span>
+                    <h3 style="margin:0; font-size:13.5px; font-weight:700; color:#0f172a;">Diagnostic & Analyse de Santé de la Trésorerie</h3>
+                  </div>
+                  <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                    <span class="badge badge-sky" style="font-weight:700; font-size:10.5px;" title="Couverture des règlements fournisseurs par les encaissements">Couverture 401/402 : <span id="chartStatRatioRecPay">—</span></span>
+                    <span class="badge badge-purple" style="font-weight:700; font-size:10.5px;" title="Niveau plancher de trésorerie">Point Bas : <span id="chartStatMinCash">—</span></span>
+                    <span class="badge badge-sky" id="badgeInsightAutonomie" style="font-weight:700; font-size:10.5px;">Autonomie : —</span>
+                    <span class="badge badge-emerald" id="badgeInsightEquilibre" style="font-weight:700; font-size:10.5px;">Équilibre : 0,00 DA ✓</span>
+                    <!-- Hidden placeholders for element ID compatibility in app.js -->
+                    <span id="chartStatWeightSalaries" style="display:none;"></span>
+                    <span id="chartStatAvgInflow" style="display:none;"></span>
+                  </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px;" id="tftInsightsCardsGrid">
+                  <!-- Dynamic Insight Card 1: Liquidités & Matelas Cash -->
+                  <div style="background:#f8fafc; border-left:3.5px solid #10b981; border-radius:6px; padding:10px 14px;">
+                    <div style="font-weight:700; font-size:12px; color:#065f46; display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                      <span>🏦</span> Position de Liquidité & Solde de Clôture
+                    </div>
+                    <div style="font-size:11.5px; color:#334155; line-height:1.5;" id="insightTextLiquidite">
+                      Chargement de l'analyse de solvabilité et de matelas de sécurité...
+                    </div>
+                  </div>
+
+                  <!-- Dynamic Insight Card 2: Flux Opérationnels (A) & Recouvrement -->
+                  <div style="background:#f8fafc; border-left:3.5px solid #0284c7; border-radius:6px; padding:10px 14px;">
+                    <div style="font-weight:700; font-size:12px; color:#0369a1; display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                      <span>⚡</span> Performance Opérationnelle & Recouvrement
+                    </div>
+                    <div style="font-size:11.5px; color:#334155; line-height:1.5;" id="insightTextOperationnel">
+                      Chargement de l'analyse du flux net et du recouvrement commercial...
+                    </div>
+                  </div>
+
+                  <!-- Dynamic Insight Card 3: Décaissements & Structure des Sorties -->
+                  <div style="background:#f8fafc; border-left:3.5px solid #f59e0b; border-radius:6px; padding:10px 14px;">
+                    <div style="font-weight:700; font-size:12px; color:#b45309; display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                      <span>⚠️</span> Structure des Décaissements & Vigilance BFR
+                    </div>
+                    <div style="font-size:11.5px; color:#334155; line-height:1.5;" id="insightTextStructure">
+                      Chargement de l'analyse de rigidité et des engagements fixes...
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4 High-Impact Visual Charts Grid -->
+              <div class="tft-charts-grid">
+                <!-- Chart 1: Treasury Solvency & Safety Buffer Trajectory -->
+                <div class="panel-card tft-chart-card">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">
+                    <h4 style="margin:0; font-size:12px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                      <span style="color:#059669;">🛡️</span> Trajectoire de Solvabilité & Matelas Cash
+                    </h4>
+                    <span class="badge badge-emerald" id="badgeChartSafetyStatus" style="font-size:10px;">Zone Saine • Seuil 3 Mois</span>
+                  </div>
+                  <div class="tft-chart-wrap">
+                    <canvas id="chartTFTCashEvolution"></canvas>
+                  </div>
+                </div>
+
+                <!-- Chart 2: Operating Cash Flow Generation & Coverage -->
+                <div class="panel-card tft-chart-card">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">
+                    <h4 style="margin:0; font-size:12px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                      <span style="color:#0284c7;">⚡</span> Encaissements vs Décaissements & Flux Net (A)
+                    </h4>
+                    <span class="badge badge-sky" id="badgeChartCoverageRatio" style="font-size:10px;">Couverture : —</span>
+                  </div>
+                  <div class="tft-chart-wrap">
+                    <canvas id="chartTFTMonthlyTrajectory"></canvas>
+                  </div>
+                </div>
+
+                <!-- Chart 3: Operating Outflows Breakdown -->
+                <div class="panel-card tft-chart-card">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">
+                    <h4 style="margin:0; font-size:12px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                      <span style="color:#f59e0b;">🍩</span> Structure des Décaissements Opérationnels
+                    </h4>
+                    <span class="badge badge-amber" id="badgeChartRigidityWeight" style="font-size:10px;">Engagements Fixes : —</span>
+                  </div>
+                  <div class="tft-chart-wrap">
+                    <canvas id="chartTFTOpBreakdown"></canvas>
+                  </div>
+                </div>
+
+                <!-- Chart 4: Net Flow Structure by Nature -->
+                <div class="panel-card tft-chart-card">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">
+                    <h4 style="margin:0; font-size:12px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                      <span style="color:#6366f1;">⚖️</span> Équilibre des Flux par Nature (A, B, C)
+                    </h4>
+                    <span class="badge badge-purple" style="font-size:10px;">Variation Nette (424)</span>
+                  </div>
+                  <div class="tft-chart-wrap">
+                    <canvas id="chartTFTStructureABC"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- 7. RÉFÉRENTIEL FOURNISSEURS & FIXATION     -->
+        <!-- ========================================== -->
+        <section id="page-fournisseurs" class="app-page">
+          <div class="page-header">
+            <div>
+              <div class="breadcrumb">Gestion des Tiers / Référentiel</div>
+              <h1>Référentiel Fournisseurs & Règles de Fixation</h1>
+              <p class="text-muted">Définissez les règles de catégorisation : verrouillez les tiers exclusifs (🔒 Fixe) ou activez le mode dynamique (🔀 Multi-catégories par compte comptable).</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-primary" id="btnRefreshSuppliers">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                Actualiser
+              </button>
+            </div>
+          </div>
+
+          <div class="page-body">
+            <!-- KPIS BANNER -->
+            <div class="stats-banner mb-4">
+              <div class="stat-item">
+                <span class="stat-label">Total Fournisseurs</span>
+                <span class="stat-val font-mono text-sky" id="kpiTotalSuppliers">127</span>
+                <span style="font-size:11px; color:#64748b;">Tiers actifs répertoriés</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">🔒 Catégorie Fixe</span>
+                <span class="stat-val font-mono text-emerald" id="kpiFixedSuppliers">120</span>
+                <span style="font-size:11px; color:#64748b;">Règle stricte prioritaire</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">🔀 Multi-Catégories</span>
+                <span class="stat-val font-mono text-purple" id="kpiMultiSuppliers">7</span>
+                <span style="font-size:11px; color:#64748b;">Selon compte FBL3N</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Simonfond s.r.l.</span>
+                <span class="stat-val font-mono text-emerald" id="kpiSimonfondBadge">PD (Fixe 🔒)</span>
+                <span style="font-size:11px; color:#64748b;">Pièces Détachées</span>
+              </div>
+            </div>
+
+            <!-- CONTROLS & FILTERS -->
+            <div class="panel-card mb-3" style="padding: 12px 16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                <div style="display:flex; gap:8px; align-items:center; flex:1; min-width:280px;">
+                  <input type="text" id="supplierSearchInput" class="form-control" placeholder="Rechercher par Code SAP (ex: 1380763) ou Nom..." style="max-width:380px;">
+                  <button class="btn btn-secondary btn-sm" id="btnClearSupplierSearch">Effacer</button>
+                </div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;" id="supplierFilterButtons">
+                  <button class="btn btn-sm btn-primary filter-sup-btn active" data-filter="all">Tous</button>
+                  <button class="btn btn-sm btn-outline-secondary filter-sup-btn" data-filter="fixed">🔒 Fixes</button>
+                  <button class="btn btn-sm btn-outline-secondary filter-sup-btn" data-filter="multi">🔀 Multi-catégories</button>
+                  <button class="btn btn-sm btn-outline-secondary filter-sup-btn" data-filter="cat-PD">PD</button>
+                  <button class="btn btn-sm btn-outline-secondary filter-sup-btn" data-filter="cat-MP">MP</button>
+                  <button class="btn btn-sm btn-outline-secondary filter-sup-btn" data-filter="cat-MA">MA</button>
+                  <button class="btn btn-sm btn-outline-secondary filter-sup-btn" data-filter="cat-S">S</button>
+                  <button class="btn btn-sm btn-outline-secondary filter-sup-btn" data-filter="cat-EQUIP">EQUIP</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- SUPPLIERS TABLE -->
+            <div class="panel-card mb-4">
+              <div class="panel-header">
+                <h3>Tableau Référentiel des Fournisseurs</h3>
+                <span class="badge badge-sky" id="supplierCountBadge">127 tiers</span>
+              </div>
+              <div class="table-responsive">
+                <table class="report-table" id="tableSuppliers">
+                  <thead>
+                    <tr>
+                      <th style="width:110px;">Code SAP</th>
+                      <th>Raison Sociale / Nom</th>
+                      <th style="width:190px;">Mode Catégorisation</th>
+                      <th style="width:200px;">Catégorie Affectée</th>
+                      <th style="width:100px; text-align:center;">Factures</th>
+                      <th style="width:150px; text-align:right;">Volume Total</th>
+                      <th style="width:110px; text-align:center;">Statut</th>
+                    </tr>
+                  </thead>
+                  <tbody id="suppliersTableBody">
+                    <!-- Populated dynamically via app.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- PAGE 9: GRAND LIVRE GÉNÉRAL SAP (FBL3N)                      -->
+        <!-- ============================================================ -->
+        <section id="page-fbl3n" class="app-page">
+          <div class="page-container">
+            <!-- PAGE HEADER -->
+            <div class="page-header">
+              <div class="page-header-info">
+                <div class="breadcrumb">
+                  <span>Grand Livre SAP</span>
+                  <span class="bc-sep">/</span>
+                  <span>Module FBL3N</span>
+                </div>
+                <h1>Écritures Générales SAP (FBL3N)</h1>
+                <p class="text-muted">Module d'intégration, d'archivage et de synchronisation des écritures du Grand Livre SAP R/3.</p>
+              </div>
+              <div class="header-actions">
+                <button class="btn btn-primary" id="btnOpenFbl3nUploadModal">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Importer Fichier Excel FBL3N
+                </button>
+              </div>
+            </div>
+
+            <!-- HERO STAGING BANNER -->
+            <div class="panel-card mb-4" style="background: linear-gradient(135deg, #091e3a 0%, #1e293b 100%); color:#ffffff; padding: 26px 30px; border-radius: 16px; box-shadow: 0 10px 30px -5px rgba(9, 30, 58, 0.25);">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:20px;">
+                <div style="max-width: 680px;">
+                  <div style="display:flex; align-items:center; gap:10px; margin-bottom: 12px;">
+                    <span class="badge" style="background: rgba(14, 165, 233, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 11.5px; padding: 4px 12px;">📦 Module d'Intégration BDD</span>
+                    <span class="badge badge-emerald" id="badgeFbl3nDatabaseStatus">SQL Server Connecté</span>
+                  </div>
+                  <h2 style="font-size: 21px; font-weight: 800; color: #ffffff; margin-bottom: 8px; letter-spacing: -0.3px;">Base d'Ingestion & Stockage FBL3N</h2>
+                  <p style="font-size: 13px; color: #cbd5e1; line-height: 1.6; margin: 0;">
+                    L'affichage direct des lignes d'écritures brutes a été temporairement masqué pour préserver la clarté et la réactivité de l'application. Les flux restent entièrement conservés, indexés et prêts pour vos analyses futures.
+                  </p>
+                </div>
+                <div style="text-align: right; background: rgba(255, 255, 255, 0.06); padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                  <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px;">Statut en Base</div>
+                  <div style="font-size: 24px; font-weight: 800; color: #38bdf8; font-family: var(--font-mono); margin: 4px 0;" id="badgeFbl3nTotalCount">30 195 lignes</div>
+                  <div style="font-size: 11px; color: #10b981; font-weight: 600;">✓ Données Sécurisées & Indexées</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- THREE MODULE STATUS TILES -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+              <div class="panel-card" style="padding: 22px; border-radius: 14px;">
+                <div style="width: 42px; height: 42px; border-radius: 10px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <h3 style="font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 6px;">Importations & Mises à Jour</h3>
+                <p style="font-size: 12.5px; color: #64748b; line-height: 1.5; margin-bottom: 16px;">
+                  Téléversez vos nouveaux fichiers Excel FBL3N à tout moment. L'analyse et l'insertion en base de données s'effectuent sans encombrer la vue.
+                </p>
+                <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('btnOpenFbl3nUploadModal').click()">
+                  Ouvrir l'assistant d'importation
+                </button>
+              </div>
+
+              <div class="panel-card" style="padding: 22px; border-radius: 14px;">
+                <div style="width: 42px; height: 42px; border-radius: 10px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                </div>
+                <h3 style="font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 6px;">Mappage Plan Comptable SCF</h3>
+                <p style="font-size: 12.5px; color: #64748b; line-height: 1.5; margin-bottom: 16px;">
+                  Les écritures de Grand Livre alimentent automatiquement la balance et les états financiers officiels (Bilan Comptable & TCR).
+                </p>
+                <a href="#tcr" class="btn btn-outline-secondary btn-sm">
+                  Consulter les soldes dans le TCR
+                </a>
+              </div>
+
+              <div class="panel-card" style="padding: 22px; border-radius: 14px;">
+                <div style="width: 42px; height: 42px; border-radius: 10px; background: #f5f3ff; color: #7c3aed; display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
+                <h3 style="font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 6px;">Affichage Temporairement Suspendu</h3>
+                <p style="font-size: 12.5px; color: #64748b; line-height: 1.5; margin-bottom: 16px;">
+                  Aucune ligne brute n'est affichée dans cette page. Nous déterminerons ensemble la disposition et les indicateurs souhaités plus tard.
+                </p>
+                <span class="badge badge-purple" style="font-size: 11px;">En attente de consignes</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================== -->
+        <!-- NOUVELLE PAGE : IMPORT & RAPPROCHEMENT COMPTABLE (GL vs BALANCE)   -->
+        <!-- ================================================================== -->
+        <section id="page-import" class="page-container" style="display:none;">
+          <!-- HEADER & ACTION BAR -->
+          <div class="page-hero-header">
+            <div class="page-hero-title-box">
+              <div class="hero-badge-tag">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Plateforme de Contrôle SAP</span>
+              </div>
+              <h1 class="page-hero-title">Chargement des Données & Rapprochement Comptable</h1>
+              <p class="page-hero-subtitle">
+                Importation directe des extractions SAP (FBL3N & Balance Générale), remplacement mensuel automatique avec détection d'écarts et contrôle d'intégrité GL ⟷ Balance.
+              </p>
+            </div>
+            
+            <div class="page-hero-actions">
+              <div class="period-picker-group">
+                <label for="reconcileSelectYear">Exercice :</label>
+                <select id="reconcileSelectYear" class="form-select form-select-sm">
+                  <option value="2026">2026</option>
+                  <option value="2025">2025</option>
+                </select>
+
+                <label for="reconcileSelectMonth">Période :</label>
+                <select id="reconcileSelectMonth" class="form-select form-select-sm">
+                  <option value="10">10 - Octobre</option>
+                  <option value="9">09 - Septembre</option>
+                  <option value="8">08 - Août</option>
+                  <option value="7">07 - Juillet</option>
+                  <option value="6">06 - Juin</option>
+                  <option value="5">05 - Mai</option>
+                  <option value="4">04 - Avril</option>
+                  <option value="3">03 - Mars</option>
+                  <option value="2">02 - Février</option>
+                  <option value="1">01 - Janvier</option>
+                  <option value="ALL">Cumul Annuel (Tous)</option>
+                </select>
+              </div>
+
+              <button type="button" class="btn btn-primary btn-sm" id="btnRefreshReconciliation">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                Contrôler le Rapprochement
+              </button>
+            </div>
+          </div>
+
+          <!-- SECTION 1 : UPLOAD CARDS -->
+          <div class="import-cards-grid">
+            <!-- CARTE 1: FBL3N GRAND LIVRE -->
+            <div class="card import-card" id="cardImportFBL3N">
+              <div class="card-header import-card-header">
+                <div class="import-card-title-wrap">
+                  <div class="import-icon-box fbl3n-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  </div>
+                  <div>
+                    <h3 class="import-card-title">1. Importation Grand Livre (FBL3N)</h3>
+                    <span class="import-card-sub">Écritures comptables détaillées, pièces, dates et montants</span>
+                  </div>
+                </div>
+                <div class="import-mode-pill-group">
+                  <button type="button" class="mode-pill-btn active" id="btnModeFbl3nSingle" data-mode="single">Fichier Unique</button>
+                  <button type="button" class="mode-pill-btn" id="btnModeFbl3nMulti" data-mode="multi">Plusieurs Fichiers</button>
+                </div>
+              </div>
+
+              <div class="card-body">
+                <!-- Dropzone FBL3N -->
+                <div class="upload-dropzone" id="dropzoneFBL3N">
+                  <input type="file" id="fileInputFBL3N" accept=".xlsx,.xls" style="display:none;">
+                  <div class="dropzone-icon">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  </div>
+                  <div class="dropzone-text" id="dropzoneTextFBL3N">
+                    <strong>Cliquez pour choisir</strong> ou glissez-déposez le fichier Excel FBL3N
+                  </div>
+                  <div class="dropzone-hint" id="dropzoneHintFBL3N">Fichier .xlsx ou .xls (ex: FBL3N_Avril.xlsx)</div>
+                </div>
+
+                <!-- Selected Files Queue -->
+                <div class="selected-files-queue" id="queueFBL3N" style="display:none;">
+                  <div class="queue-header">
+                    <span class="queue-title">Fichiers sélectionnés (<span id="queueCountFBL3N">0</span>)</span>
+                    <button type="button" class="btn-text-danger" id="btnClearQueueFBL3N">Effacer tout</button>
+                  </div>
+                  <div class="queue-list" id="queueListFBL3N"></div>
+                </div>
+
+                <!-- Info remplacement -->
+                <div class="import-rule-box">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  <span>
+                    <strong>Gestion automatique des doublons :</strong> Si un mois (ex: Avril) existe déjà, les écritures sont <em>remplacées</em> et les différences (ajouts, modifications) sont journalisées.
+                  </span>
+                </div>
+
+                <div class="import-card-actions">
+                  <button type="button" class="btn btn-primary" id="btnUploadFBL3N" disabled>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span id="btnTextUploadFBL3N">Lancer l'Importation GL</span>
+                  </button>
+                </div>
+
+                <!-- Snapshot état actuel en base -->
+                <div class="loaded-summary-bar" id="summaryFBL3NLoaded">
+                  <span class="summary-label">Mois chargés en BDD :</span>
+                  <span class="summary-value" id="textFBL3NSummary">Chargement...</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- CARTE 2: BALANCE GÉNÉRALE RFSSLD00 -->
+            <div class="card import-card" id="cardImportBalance">
+              <div class="card-header import-card-header">
+                <div class="import-card-title-wrap">
+                  <div class="import-icon-box balance-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="m3 7 9-4 9 4"/><path d="m3 17 9 4 9-4"/><path d="M6 10v6"/><path d="M18 10v6"/></svg>
+                  </div>
+                  <div>
+                    <h3 class="import-card-title">2. Importation Balances (RFSSLD00)</h3>
+                    <span class="import-card-sub">Soldes cumulés officiels, débits, crédits et reports à nouveau</span>
+                  </div>
+                </div>
+                <div class="import-mode-pill-group">
+                  <button type="button" class="mode-pill-btn active" id="btnModeBalanceSingle" data-mode="single">Fichier Unique</button>
+                  <button type="button" class="mode-pill-btn" id="btnModeBalanceMulti" data-mode="multi">Plusieurs Fichiers</button>
+                </div>
+              </div>
+
+              <div class="card-body">
+                <!-- Dropzone Balance -->
+                <div class="upload-dropzone" id="dropzoneBalance">
+                  <input type="file" id="fileInputBalance" accept=".xlsx,.xls" style="display:none;">
+                  <div class="dropzone-icon">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  </div>
+                  <div class="dropzone-text" id="dropzoneTextBalance">
+                    <strong>Cliquez pour choisir</strong> ou glissez-déposez le fichier Balance Excel
+                  </div>
+                  <div class="dropzone-hint" id="dropzoneHintBalance">Fichier .xls ou .xlsx (ex: balance 102026.xls)</div>
+                </div>
+
+                <div class="period-override-field" id="wrapBalancePeriodOverride">
+                  <label for="inputBalancePeriodOverride">Clé Période (Optionnel - auto-détectée si vide) :</label>
+                  <input type="text" id="inputBalancePeriodOverride" class="form-control form-control-sm" placeholder="Ex: 102026, 092026, 2025...">
+                </div>
+
+                <!-- Selected Files Queue -->
+                <div class="selected-files-queue" id="queueBalance" style="display:none;">
+                  <div class="queue-header">
+                    <span class="queue-title">Fichiers sélectionnés (<span id="queueCountBalance">0</span>)</span>
+                    <button type="button" class="btn-text-danger" id="btnClearQueueBalance">Effacer tout</button>
+                  </div>
+                  <div class="queue-list" id="queueListBalance"></div>
+                </div>
+
+                <!-- Info remplacement -->
+                <div class="import-rule-box">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  <span>
+                    <strong>Gestion automatique des doublons :</strong> Si la période existe déjà, les soldes et mouvements sont <em>remplacés</em> et les variations de soldes sont notifiées.
+                  </span>
+                </div>
+
+                <div class="import-card-actions">
+                  <button type="button" class="btn btn-emerald" id="btnUploadBalance" disabled>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span id="btnTextUploadBalance">Lancer l'Importation Balances</span>
+                  </button>
+                </div>
+
+                <!-- Snapshot état actuel en base -->
+                <div class="loaded-summary-bar" id="summaryBalanceLoaded">
+                  <span class="summary-label">Balances en BDD :</span>
+                  <span class="summary-value" id="textBalanceSummary">Chargement...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 2 : NOTIFICATIONS & DIFF RE-UPLOAD ALERTS -->
+          <div class="diff-notifications-section" id="sectionDiffAlerts">
+            <div class="section-title-row">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <h3 class="section-heading">Journal des Remplacements & Détection d'Écarts</h3>
+              </div>
+              <span class="feed-count-tag" id="tagDiffAlertsCount">0 alerte</span>
+            </div>
+            <div class="diff-feed-list" id="feedDiffAlerts">
+              <div class="feed-empty-state">
+                Aucun remplacement récent enregistré. Les modifications entre deux chargements d'un même mois s'afficheront ici.
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 3 : RAPPROCHEMENT COMPTABLE & AUDIT GL ⟷ BALANCE -->
+          <div class="reconciliation-audit-card card">
+            <div class="card-header audit-header-bar">
+              <div>
+                <h3 class="card-title">Audit de Concordance : Grand Livre (FBL3N) ⟷ Balance Générale</h3>
+                <span class="card-subtitle">Comparaison compte par compte des mouvements de la période sélectionnée</span>
+              </div>
+              <div class="reconcile-status-badge" id="badgeGlobalReconciliation">
+                <span class="status-pulse-dot"></span>
+                <span id="textGlobalReconcileStatus">Contrôle en cours...</span>
+              </div>
+            </div>
+
+            <div class="card-body">
+              <!-- KPI SUMMARY ROW -->
+              <div class="reconcile-kpi-grid">
+                <div class="kpi-mini-card">
+                  <span class="kpi-mini-label">Mouvements GL (FBL3N)</span>
+                  <div class="kpi-mini-val" id="kpiGLNet">—</div>
+                  <div class="kpi-mini-sub" id="kpiGLDebCred">Débit: — | Crédit: —</div>
+                </div>
+
+                <div class="kpi-mini-card">
+                  <span class="kpi-mini-label">Mouvements Balance (RFSSLD00)</span>
+                  <div class="kpi-mini-val" id="kpiBalNet">—</div>
+                  <div class="kpi-mini-sub" id="kpiBalDebCred">Débit: — | Crédit: —</div>
+                </div>
+
+                <div class="kpi-mini-card highlight-card">
+                  <span class="kpi-mini-label">Écart Net Global</span>
+                  <div class="kpi-mini-val" id="kpiNetDiscrepancy">—</div>
+                  <div class="kpi-mini-sub" id="kpiDiscrepancyDesc">Différence absolue</div>
+                </div>
+
+                <div class="kpi-mini-card">
+                  <span class="kpi-mini-label">Comptes Contrôlés</span>
+                  <div class="kpi-mini-val" id="kpiAccountsRatio">—</div>
+                  <div class="kpi-mini-sub" id="kpiAccountsDetail">Conformes vs Écarts</div>
+                </div>
+              </div>
+
+              <!-- CONTROLS & FILTER TABS -->
+              <div class="reconcile-filter-bar">
+                <div class="reconcile-tabs">
+                  <button type="button" class="tab-btn active" data-reconcile-filter="all" id="tabFilterAll">
+                    Tous les comptes (<span id="countTabAll">0</span>)
+                  </button>
+                  <button type="button" class="tab-btn tab-warning" data-reconcile-filter="mismatch" id="tabFilterMismatch">
+                    🔴 En divergence (<span id="countTabMismatch">0</span>)
+                  </button>
+                  <button type="button" class="tab-btn tab-success" data-reconcile-filter="match" id="tabFilterMatch">
+                    🟢 Concordants (<span id="countTabMatch">0</span>)
+                  </button>
+                </div>
+
+                <div class="search-input-wrap">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="inputSearchReconciliation" class="form-control form-control-sm" placeholder="Rechercher par compte ou libellé...">
+                </div>
+              </div>
+
+              <!-- RECONCILIATION TABLE -->
+              <div class="table-responsive audit-table-wrapper">
+                <table class="table audit-table" id="tableReconciliation">
+                  <thead>
+                    <tr>
+                      <th style="width:110px;">Compte SAP</th>
+                      <th style="width:100px;">Plan SCF</th>
+                      <th>Intitulé du Compte</th>
+                      <th class="num-col" style="width:140px;">Mvt GL (<span class="col-unit">KDA</span>)</th>
+                      <th class="num-col" style="width:140px;">Mvt Balance (<span class="col-unit">KDA</span>)</th>
+                      <th class="num-col" style="width:140px;">Écart (<span class="col-unit">KDA</span>)</th>
+                      <th style="width:120px; text-align:center;">Statut</th>
+                      <th style="width:90px; text-align:center;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyReconciliation">
+                    <tr>
+                      <td colspan="8" style="text-align:center; padding:32px; color:#64748b;">
+                        Chargement de l'audit de concordance...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- MODAL IMPORT FBL3N -->
+        <div id="modalFbl3nUpload" class="custom-modal" style="display:none;">
+          <div class="custom-modal-backdrop" id="modalFbl3nBackdrop"></div>
+          <div class="custom-modal-dialog">
+            <div class="custom-modal-content">
+              <div class="custom-modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <h3 style="margin:0; font-size:15px; font-weight:700; color:var(--navy);">Importer un Fichier Excel FBL3N</h3>
+                </div>
+                <button type="button" class="btn-close-modal" id="btnCloseFbl3nModal">&times;</button>
+              </div>
+              <div class="custom-modal-body">
+                <p style="font-size:12.5px; color:#475569; margin-bottom:14px;">
+                  Sélectionnez votre fichier d'extraction Excel SAP FBL3N (<code>.xlsx</code> ou <code>.xls</code>). Les écritures seront analysées et insérées dans la base de données SQL Server.
+                </p>
+                
+                <div class="file-drop-zone" id="fbl3nDropZone" style="border:2px dashed #0284c7; border-radius:8px; padding:24px; text-align:center; background:#f0f9ff; cursor:pointer; margin-bottom:16px;">
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2" style="margin-bottom:8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                  <div style="font-size:13px; font-weight:700; color:#0369a1;">Cliquez ou glissez-déposez le fichier Excel ici</div>
+                  <div style="font-size:11.5px; color:#64748b; margin-top:4px;" id="fbl3nSelectedFileName">Aucun fichier sélectionné</div>
+                  <input type="file" id="fbl3nFileInput" accept=".xlsx,.xls" style="display:none;">
+                </div>
+
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px; margin-bottom:16px;">
+                  <div style="font-size:11.5px; font-weight:700; color:#334155; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">
+                    Mode de mise à jour des données :
+                  </div>
+                  
+                  <div style="display:flex; flex-direction:column; gap:9px;">
+                    <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; background:#ffffff; border:1.5px solid #0284c7; border-radius:6px; padding:10px 12px; transition:border-color 0.15s;">
+                      <input type="radio" name="fbl3nImportMode" value="month" checked style="margin-top:2px;">
+                      <div>
+                        <div style="font-size:12.5px; font-weight:700; color:#0369a1;">Mise à jour mensuelle incrémentale (Recommandé)</div>
+                        <div style="font-size:11px; color:#64748b; margin-top:2px; line-height:1.4;">
+                          Ajoute ou rafraîchit <strong>uniquement le(s) mois présent(s)</strong> dans ce fichier Excel. Vos mois précédents déjà en base (ex : Janvier à Septembre 2026) restent préservés et intacts.
+                        </div>
+                      </div>
+                    </label>
+
+                    <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:10px 12px; transition:border-color 0.15s;">
+                      <input type="radio" name="fbl3nImportMode" value="year" style="margin-top:2px;">
+                      <div>
+                        <div style="font-size:12.5px; font-weight:700; color:#334155;">Remplacement de l'exercice complet (Annuel)</div>
+                        <div style="font-size:11px; color:#64748b; margin-top:2px; line-height:1.4;">
+                          Écrase et remplace la totalité de l'année concernée (ex : tout 2026) tout en préservant les autres années (2025, 2024...).
+                        </div>
+                      </div>
+                    </label>
+
+                    <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:10px 12px; transition:border-color 0.15s;">
+                      <input type="radio" name="fbl3nImportMode" value="all" style="margin-top:2px;">
+                      <div>
+                        <div style="font-size:12.5px; font-weight:700; color:#991b1b;">Réinitialisation totale de la base</div>
+                        <div style="font-size:11px; color:#64748b; margin-top:2px; line-height:1.4;">
+                          Vide l'ensemble des écritures FBL3N avant d'insérer les nouvelles lignes.
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div id="fbl3nUploadStatus" style="display:none; margin-bottom:12px; padding:10px; border-radius:6px; font-size:12px;"></div>
+              </div>
+              <div class="custom-modal-footer" style="display:flex; justify-content:flex-end; gap:8px;">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnCancelFbl3nUpload">Annuler</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnSubmitFbl3nUpload">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Lancer l'importation BDD
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="chart.umd.min.js"></script>
+  <script>if(typeof Chart==='undefined'){document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"><\/script>');}</script>
+  <script src="app.js?v=20261013_v8"></script>
+</body>
+</html>
