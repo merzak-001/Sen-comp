@@ -1079,89 +1079,93 @@
         <!-- 6. BILAN COMPTABLE (ACTIF & PASSIF — SCF)   -->
         <!-- ========================================== -->
         <section id="page-bilan" class="app-page">
-          <div class="page-header">
-            <div class="page-header-info">
-              <div class="breadcrumb">
-                <span>États Financiers (SCF)</span>
-                <span class="bc-sep">/</span>
-                <span>Bilan Patrimonial</span>
+          <div class="ef-header">
+            <div class="ef-header-left">
+              <div class="ef-breadcrumb">
+                <span>États Financiers SCF</span>
+                <span class="ef-sep">/</span>
+                <span class="ef-badge">Bilan Patrimonial</span>
               </div>
-              <h1 id="bilanPageHeading">Bilan Comptable (Actif & Passif — SCF Algérie)</h1>
-              <p class="text-muted" id="bilanHeaderSubtitle">Situation patrimoniale officielle (Série G nº2) • Comparatif Exercice 2026 (N) vs 2025 (N-1).</p>
+              <h1 id="bilanPageHeading" class="ef-title">Bilan Comptable (Actif & Passif — SCF Algérie)</h1>
+              <p class="ef-subtitle" id="bilanHeaderSubtitle">Situation patrimoniale officielle (Série G nº2) • Comparatif Exercice 2026 (N) vs 2025 (N-1).</p>
             </div>
-            <div class="header-actions">
-              <div class="header-fiscal-pill" title="Changer l'exercice comptable affiché">
-                <span class="pill-icon">📅</span>
-                <label for="selectBilanYear">Exercice :</label>
-                <select id="selectBilanYear" class="styled-header-select">
-                  <!-- Dynamically populated -->
-                </select>
-              </div>
-              <div class="header-fiscal-pill" title="Filtrer par mois ou afficher le cumul annuel">
-                <span class="pill-icon">⏱️</span>
-                <label for="selectBilanMonth">Mois :</label>
-                <select id="selectBilanMonth" class="styled-header-select">
-                  <!-- Dynamically populated -->
-                </select>
-              </div>
-              <div class="source-toggle-group" id="bilanSourceToggle" title="Choisir la source des données comptables pour le Bilan">
-                <span class="source-toggle-label">Source :</span>
-                <button type="button" class="source-toggle-btn active" data-source="balance" id="btnBilanSourceBalance" title="Calculer à partir de la Balance Générale (RFSSLD00)">⚖️ Balance</button>
-                <button type="button" class="source-toggle-btn" data-source="gl" id="btnBilanSourceGL" title="Calculer à partir des écritures du Grand Livre (FBL3N)">📖 Grand Livre</button>
-              </div>
-              <div class="page-fiscal-badge" id="badgeBilanFiscalYears">
-                <span>Exercice N vs N-1</span>
-              </div>
-              <button class="btn btn-secondary" id="btnToggleBilanAccounts">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                Déplier Comptes SAP
-              </button>
-              <button class="btn btn-secondary" onclick="window.print()">
+            <div class="ef-header-actions">
+              <button class="btn btn-secondary btn-sm" onclick="window.print()" title="Imprimer le bilan au format A4">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 Imprimer A4
               </button>
-              <button class="btn btn-primary" id="btnRefreshBilan">
+              <button class="btn btn-primary btn-sm" id="btnRefreshBilan" title="Actualiser les données du Bilan">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                 Actualiser
               </button>
             </div>
           </div>
 
-          <div class="page-body">
-            <!-- KPIS BANNER -->
-            <div class="stats-banner mb-4">
-              <div class="stat-item">
-                <span class="stat-label" id="lblKpiActifNet">Total Actif Net (2026)</span>
-                <span class="stat-val font-mono text-sky" id="kpiActifNet26">—</span>
-                <span style="font-size:11px; color:#64748b;" id="kpiActifNet25Sub">vs N-1 : —</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label" id="lblKpiCapitaux">Capitaux Propres (2026)</span>
-                <span class="stat-val font-mono text-emerald" id="kpiCapitauxPropres">—</span>
-                <span style="font-size:11px; color:#64748b;" id="kpiCapitauxPropresSub">Ressources stables</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label" id="lblKpiFRNG">Fonds de Roulement (FRNG 2026)</span>
-                <span class="stat-val font-mono text-purple" id="kpiFRNG">—</span>
-                <span style="font-size:11px; color:#64748b;" id="kpiFRNGSub">Marge de sécurité</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label" id="lblKpiEquilibre">Équilibre Actif / Passif</span>
-                <span class="stat-val font-mono text-emerald" id="kpiBilanEquilibre">Équilibré ✓</span>
-                <span style="font-size:11px; color:#64748b;" id="kpiBilanDiff">Écart : 0,00 DA</span>
+          <!-- UNIFIED FILTER & CONTROL BAR -->
+          <div class="ef-control-bar">
+            <div class="ef-control-group">
+              <span class="ef-label">📅 Exercice</span>
+              <select id="selectBilanYear" class="ef-select"></select>
+            </div>
+
+            <div class="ef-control-group">
+              <span class="ef-label">⏱️ Période</span>
+              <select id="selectBilanMonth" class="ef-select"></select>
+            </div>
+
+            <div class="ef-control-group">
+              <span class="ef-label">📊 Source</span>
+              <div class="source-toggle-group" id="bilanSourceToggle" title="Choisir la source des données comptables pour le Bilan">
+                <button type="button" class="source-toggle-btn active" data-source="balance" id="btnBilanSourceBalance" title="Calculer à partir de la Balance Générale (RFSSLD00)">⚖️ Balance</button>
+                <button type="button" class="source-toggle-btn" data-source="gl" id="btnBilanSourceGL" title="Calculer à partir des écritures du Grand Livre (FBL3N)">📖 Grand Livre</button>
               </div>
             </div>
 
-            <!-- TABS SWITCHER -->
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+            <div class="ef-control-group">
+              <span class="ef-label">👁️ Vue</span>
               <div class="btn-group" role="group" id="bilanViewTabs">
-                <button type="button" class="btn btn-sm btn-primary bilan-tab-btn active" data-view="all">Vue Complète (Actif & Passif)</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary bilan-tab-btn" data-view="actif">Actif Uniquement</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary bilan-tab-btn" data-view="passif">Passif Uniquement</button>
+                <button type="button" class="btn btn-sm btn-primary bilan-tab-btn active" data-view="all">Tout</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary bilan-tab-btn" data-view="actif">Actif</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary bilan-tab-btn" data-view="passif">Passif</button>
               </div>
-              <div style="display:flex; align-items:center; gap:8px;">
-                <span class="badge badge-emerald">Conforme Liasse Fiscale (Série G nº2)</span>
-                <span class="badge badge-slate" id="badgeBilanUnit">Unité : DA</span>
+            </div>
+
+            <div class="ef-control-spacer"></div>
+
+            <div class="ef-control-actions">
+              <div class="page-fiscal-badge" id="badgeBilanFiscalYears">
+                <span>Exercice N vs N-1</span>
+              </div>
+              <button class="btn btn-secondary btn-sm" id="btnToggleBilanAccounts">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                Déplier Comptes SAP
+              </button>
+              <span class="badge badge-slate" id="badgeBilanUnit">Unité : DA</span>
+            </div>
+          </div>
+
+          <div class="page-body" style="padding:0;">
+            <!-- KPIS BANNER -->
+            <div class="ef-kpis-grid">
+              <div class="ef-kpi-card accent-blue">
+                <span class="ef-kpi-label" id="lblKpiActifNet">Total Actif Net (2026)</span>
+                <span class="ef-kpi-val text-sky" id="kpiActifNet26">—</span>
+                <span class="ef-kpi-sub" id="kpiActifNet25Sub">vs N-1 : —</span>
+              </div>
+              <div class="ef-kpi-card accent-emerald">
+                <span class="ef-kpi-label" id="lblKpiCapitaux">Capitaux Propres (2026)</span>
+                <span class="ef-kpi-val text-emerald" id="kpiCapitauxPropres">—</span>
+                <span class="ef-kpi-sub" id="kpiCapitauxPropresSub">Ressources stables</span>
+              </div>
+              <div class="ef-kpi-card accent-purple">
+                <span class="ef-kpi-label" id="lblKpiFRNG">Fonds de Roulement (FRNG 2026)</span>
+                <span class="ef-kpi-val text-purple" id="kpiFRNG">—</span>
+                <span class="ef-kpi-sub" id="kpiFRNGSub">Marge de sécurité</span>
+              </div>
+              <div class="ef-kpi-card accent-navy">
+                <span class="ef-kpi-label" id="lblKpiEquilibre">Équilibre Actif / Passif</span>
+                <span class="ef-kpi-val text-emerald" id="kpiBilanEquilibre">Équilibré ✓</span>
+                <span class="ef-kpi-sub" id="kpiBilanDiff">Écart : 0,00 DA</span>
               </div>
             </div>
 
@@ -1230,76 +1234,84 @@
         <!-- 7. COMPTE DE RÉSULTAT (TCR — SCF ALGÉRIE)  -->
         <!-- ========================================== -->
         <section id="page-tcr" class="app-page">
-          <div class="page-header">
-            <div class="page-header-info">
-              <div class="breadcrumb">
+          <div class="ef-header">
+            <div class="ef-header-left">
+              <div class="ef-breadcrumb">
                 <span>États Financiers SCF</span>
-                <span class="bc-sep">/</span>
-                <span>Compte de Résultat</span>
+                <span class="ef-sep">/</span>
+                <span class="ef-badge">Compte de Résultat</span>
               </div>
-              <h1 id="tcrPageHeading">Tableau des Comptes de Résultats (TCR)</h1>
-              <p class="text-muted" id="tcrHeaderSubtitle">Soldes Intermédiaires de Gestion (SIG) de SENSUS SPA : Production, Consommation, VA, EBE, Résultat Opérationnel et Résultat Net.</p>
+              <h1 id="tcrPageHeading" class="ef-title">Tableau des Comptes de Résultats (TCR)</h1>
+              <p class="ef-subtitle" id="tcrHeaderSubtitle">Soldes Intermédiaires de Gestion (SIG) de SENSUS SPA : Production, Consommation, VA, EBE, Résultat Opérationnel et Résultat Net.</p>
             </div>
-            <div class="header-actions">
-              <div class="header-fiscal-pill" title="Changer l'exercice comptable affiché">
-                <span class="pill-icon">📅</span>
-                <label for="selectTCRYear">Exercice :</label>
-                <select id="selectTCRYear" class="styled-header-select">
-                  <!-- Dynamically populated -->
-                </select>
-              </div>
-              <div class="header-fiscal-pill" title="Filtrer par mois ou afficher le cumul annuel">
-                <span class="pill-icon">⏱️</span>
-                <label for="selectTCRMonth">Mois :</label>
-                <select id="selectTCRMonth" class="styled-header-select">
-                  <!-- Dynamically populated -->
-                </select>
-              </div>
-              <div class="source-toggle-group" id="tcrSourceToggle" title="Choisir la source des données comptables pour le TCR">
-                <span class="source-toggle-label">Source :</span>
-                <button type="button" class="source-toggle-btn active" data-source="balance" id="btnTcrSourceBalance" title="Calculer à partir de la Balance Générale (RFSSLD00)">⚖️ Balance</button>
-                <button type="button" class="source-toggle-btn" data-source="gl" id="btnTcrSourceGL" title="Calculer à partir des écritures du Grand Livre (FBL3N)">📖 Grand Livre</button>
-              </div>
-              <div class="page-fiscal-badge" id="badgeTcrFiscalYears">
-                <span>Exercice N vs N-1</span>
-              </div>
-              <button class="btn btn-secondary" id="btnToggleTcrAccounts">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                Déplier Comptes SAP
-              </button>
-              <button class="btn btn-secondary" onclick="window.print()">
+            <div class="ef-header-actions">
+              <button class="btn btn-secondary btn-sm" onclick="window.print()" title="Imprimer le TCR au format A4">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 Imprimer A4
               </button>
-              <button class="btn btn-primary" id="btnRefreshTCR">
+              <button class="btn btn-primary btn-sm" id="btnRefreshTCR" title="Actualiser les données du TCR">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                 Actualiser
               </button>
             </div>
           </div>
 
-          <div class="page-body">
+          <!-- UNIFIED FILTER & CONTROL BAR -->
+          <div class="ef-control-bar">
+            <div class="ef-control-group">
+              <span class="ef-label">📅 Exercice</span>
+              <select id="selectTCRYear" class="ef-select"></select>
+            </div>
+
+            <div class="ef-control-group">
+              <span class="ef-label">⏱️ Période</span>
+              <select id="selectTCRMonth" class="ef-select"></select>
+            </div>
+
+            <div class="ef-control-group">
+              <span class="ef-label">📊 Source</span>
+              <div class="source-toggle-group" id="tcrSourceToggle" title="Choisir la source des données comptables pour le TCR">
+                <button type="button" class="source-toggle-btn active" data-source="balance" id="btnTcrSourceBalance" title="Calculer à partir de la Balance Générale (RFSSLD00)">⚖️ Balance</button>
+                <button type="button" class="source-toggle-btn" data-source="gl" id="btnTcrSourceGL" title="Calculer à partir des écritures du Grand Livre (FBL3N)">📖 Grand Livre</button>
+              </div>
+            </div>
+
+            <div class="ef-control-spacer"></div>
+
+            <div class="ef-control-actions">
+              <div class="page-fiscal-badge" id="badgeTcrFiscalYears">
+                <span>Exercice N vs N-1</span>
+              </div>
+              <button class="btn btn-secondary btn-sm" id="btnToggleTcrAccounts">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                Déplier Comptes SAP
+              </button>
+              <span class="badge badge-slate" id="badgeTcrUnit">Unité : DA</span>
+            </div>
+          </div>
+
+          <div class="page-body" style="padding:0;">
             <!-- KPIS CARDS -->
-            <div class="stats-banner mb-4">
-              <div class="stat-item">
-                <span class="stat-label" id="lblKpiTcrCA">Chiffre d'Affaires (70)</span>
-                <span class="stat-val font-mono text-sky" id="kpiTcrCA">—</span>
-                <span style="font-size:11px; color:#64748b;" id="kpiTcrCADiff">vs N-1: —</span>
+            <div class="ef-kpis-grid">
+              <div class="ef-kpi-card accent-blue">
+                <span class="ef-kpi-label" id="lblKpiTcrCA">Chiffre d'Affaires (70)</span>
+                <span class="ef-kpi-val text-sky" id="kpiTcrCA">—</span>
+                <span class="ef-kpi-sub" id="kpiTcrCADiff">vs N-1: —</span>
               </div>
-              <div class="stat-item">
-                <span class="stat-label" id="lblKpiTcrVA">Valeur Ajoutée (VA)</span>
-                <span class="stat-val font-mono text-emerald" id="kpiTcrVA">—</span>
-                <span style="font-size:11px; color:#64748b;" id="kpiTcrVATaux">Taux de VA: —</span>
+              <div class="ef-kpi-card accent-emerald">
+                <span class="ef-kpi-label" id="lblKpiTcrVA">Valeur Ajoutée (VA)</span>
+                <span class="ef-kpi-val text-emerald" id="kpiTcrVA">—</span>
+                <span class="ef-kpi-sub" id="kpiTcrVATaux">Taux de VA: —</span>
               </div>
-              <div class="stat-item">
-                <span class="stat-label" id="lblKpiTcrEBE">Excédent Brut Exploitation (EBE)</span>
-                <span class="stat-val font-mono text-purple" id="kpiTcrEBE">—</span>
-                <span style="font-size:11px; color:#64748b;" id="kpiTcrEBEMarge">Marge EBE: —</span>
+              <div class="ef-kpi-card accent-purple">
+                <span class="ef-kpi-label" id="lblKpiTcrEBE">Excédent Brut Exploitation (EBE)</span>
+                <span class="ef-kpi-val text-purple" id="kpiTcrEBE">—</span>
+                <span class="ef-kpi-sub" id="kpiTcrEBEMarge">Marge EBE: —</span>
               </div>
-              <div class="stat-item">
-                <span class="stat-label" id="lblKpiTcrRN">Résultat Net de l'Exercice</span>
-                <span class="stat-val font-mono text-emerald" id="kpiTcrRN">—</span>
-                <span style="font-size:11px; color:#64748b;" id="kpiTcrRNMarge">Marge Nette: —</span>
+              <div class="ef-kpi-card accent-emerald">
+                <span class="ef-kpi-label" id="lblKpiTcrRN">Résultat Net de l'Exercice</span>
+                <span class="ef-kpi-val text-emerald" id="kpiTcrRN">—</span>
+                <span class="ef-kpi-sub" id="kpiTcrRNMarge">Marge Nette: —</span>
               </div>
             </div>
 
@@ -1519,61 +1531,65 @@
         <!-- 7b. TABLEAU DES FLUX DE TRÉSORERIE (TFT)   -->
         <!-- ========================================== -->
         <section id="page-tft" class="app-page">
-          <div class="page-header">
-            <div class="page-header-info">
-              <div class="breadcrumb">
+          <div class="ef-header">
+            <div class="ef-header-left">
+              <div class="ef-breadcrumb">
                 <span>États Financiers SCF</span>
-                <span class="bc-sep">/</span>
-                <span>Flux de Trésorerie</span>
+                <span class="ef-sep">/</span>
+                <span class="ef-badge">Flux de Trésorerie</span>
               </div>
-              <h1 id="tftPageHeading">Tableau des Flux de Trésorerie (TFT)</h1>
-              <p class="text-muted" id="tftHeaderSubtitle">Méthode Directe Officielle SCF Algérie • Flux de trésorerie opérationnels (A), d'investissement (B) et de financement (C).</p>
+              <h1 id="tftPageHeading" class="ef-title">Tableau des Flux de Trésorerie (TFT)</h1>
+              <p class="ef-subtitle" id="tftHeaderSubtitle">Méthode Directe Officielle SCF Algérie • Flux de trésorerie opérationnels (A), d'investissement (B) et de financement (C).</p>
             </div>
-            <div class="header-actions">
-              <div class="page-fiscal-badge" id="badgeTFTFiscalYears" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; padding:6px 14px; border-radius:6px; font-weight:600; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
-                <span style="font-size:13px;">📅</span>
-                <span id="badgeTFTFiscalText">Exercice 2026 (N) vs 2025 (N-1)</span>
-              </div>
-              <!-- Hidden select elements preserved for ID compatibility -->
-              <select id="selectTFTYear" style="display:none;"></select>
-              <select id="selectTFTMonth" style="display:none;"></select>
-              <button class="btn btn-secondary" onclick="window.print()">
+            <div class="ef-header-actions">
+              <button class="btn btn-secondary btn-sm" onclick="window.print()" title="Imprimer le TFT au format A4">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 Imprimer A4
               </button>
-              <button class="btn btn-primary" id="btnRefreshTFT">
+              <button class="btn btn-primary btn-sm" id="btnRefreshTFT" title="Actualiser les flux de trésorerie">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                 Actualiser
               </button>
             </div>
           </div>
 
-          <div class="page-body">
+          <!-- UNIFIED FILTER & CONTROL BAR -->
+          <div class="ef-control-bar">
+            <div class="page-fiscal-badge" id="badgeTFTFiscalYears" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; padding:6px 14px; border-radius:8px; font-weight:600; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+              <span style="font-size:13px;">📅</span>
+              <span id="badgeTFTFiscalText">Exercice 2026 (N) vs 2025 (N-1)</span>
+            </div>
+            <!-- Hidden select elements preserved for ID compatibility -->
+            <select id="selectTFTYear" style="display:none;"></select>
+            <select id="selectTFTMonth" style="display:none;"></select>
+          </div>
+
+          <div class="page-body" style="padding:0;">
             <!-- KPIS CARDS -->
-            <div class="stats-banner mb-4">
-              <div class="stat-item">
-                <span class="stat-label" id="lblKpiTFTFluxOp">Flux Opérationnels (A)</span>
-                <span class="stat-val font-mono text-sky" id="kpiTFTFluxOpA">—</span>
-                <span style="font-size:11px; color:#64748b;" id="kpiTFTFluxOpASub">Note 408 • Exploitation</span>
+            <div class="ef-kpis-grid">
+              <div class="ef-kpi-card accent-blue">
+                <span class="ef-kpi-label" id="lblKpiTFTFluxOp">Flux Opérationnels (A)</span>
+                <span class="ef-kpi-val text-sky" id="kpiTFTFluxOpA">—</span>
+                <span class="ef-kpi-sub" id="kpiTFTFluxOpASub">Note 408 • Exploitation</span>
               </div>
-              <div class="stat-item">
-                <span class="stat-label" id="lblKpiTFTFluxInv">Flux Investissement (B)</span>
-                <span class="stat-val font-mono text-purple" id="kpiTFTFluxInvB">—</span>
-                <span style="font-size:11px; color:#64748b;" id="kpiTFTFluxInvBSub">Note 416 • Immobilisations & DAT</span>
+              <div class="ef-kpi-card accent-purple">
+                <span class="ef-kpi-label" id="lblKpiTFTFluxInv">Flux Investissement (B)</span>
+                <span class="ef-kpi-val text-purple" id="kpiTFTFluxInvB">—</span>
+                <span class="ef-kpi-sub" id="kpiTFTFluxInvBSub">Note 416 • Immobilisations & DAT</span>
               </div>
-              <div class="stat-item">
-                <span class="stat-label" id="lblKpiTFTFluxFin">Flux Financement (C)</span>
-                <span class="stat-val font-mono text-amber" id="kpiTFTFluxFinC">—</span>
-                <span style="font-size:11px; color:#64748b;" id="kpiTFTFluxFinCSub">Note 422 • Dividendes & Change</span>
+              <div class="ef-kpi-card accent-amber">
+                <span class="ef-kpi-label" id="lblKpiTFTFluxFin">Flux Financement (C)</span>
+                <span class="ef-kpi-val text-amber" id="kpiTFTFluxFinC">—</span>
+                <span class="ef-kpi-sub" id="kpiTFTFluxFinCSub">Note 422 • Dividendes & Change</span>
               </div>
-              <div class="stat-item">
-                <span class="stat-label" id="lblKpiTFTVarNet">Variation Nette (A+B+C)</span>
-                <span class="stat-val font-mono text-navy" id="kpiTFTVarNet">—</span>
-                <span style="font-size:11px; color:#64748b;" id="kpiTFTVarNetSub">Note 424 • Flux de période</span>
+              <div class="ef-kpi-card accent-navy">
+                <span class="ef-kpi-label" id="lblKpiTFTVarNet">Variation Nette (A+B+C)</span>
+                <span class="ef-kpi-val text-navy" id="kpiTFTVarNet">—</span>
+                <span class="ef-kpi-sub" id="kpiTFTVarNetSub">Note 424 • Flux de période</span>
               </div>
-              <div class="stat-item">
-                <span class="stat-label" id="lblKpiTFTCloture">Trésorerie de Clôture</span>
-                <span class="stat-val font-mono text-emerald" id="kpiTFTCloture">—</span>
+              <div class="ef-kpi-card accent-emerald">
+                <span class="ef-kpi-label" id="lblKpiTFTCloture">Trésorerie de Clôture</span>
+                <span class="ef-kpi-val text-emerald" id="kpiTFTCloture">—</span>
                 <div style="font-size:11px; margin-top:2px;">
                   <span class="badge badge-emerald" id="kpiTFTEquilibreBadge" style="font-weight:700;">Équilibré ✓ (0,00 DA)</span>
                 </div>
