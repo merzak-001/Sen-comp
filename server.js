@@ -93,6 +93,13 @@ app.post('/api/auth/logout', (req, res) => {
   res.json({ success: true, message: 'Déconnecté avec succès' });
 });
 
+app.post('/api/admin/restart', (req, res) => {
+  res.json({ success: true, message: 'Redémarrage du serveur en cours...' });
+  setTimeout(() => {
+    process.exit(0);
+  }, 500);
+});
+
 // Status endpoint
 app.get('/api/status', (req, res) => {
   res.json({
