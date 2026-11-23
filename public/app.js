@@ -486,6 +486,19 @@ function populateMonthSelects() {
   if (fbl3nMonthEl && AppState.selectedMonth !== 'ALL') {
     fbl3nMonthEl.value = AppState.selectedMonth;
   }
+
+  // Update visibility and label of quick delete buttons in financial control bars
+  const isMonthSelected = AppState.selectedMonth && AppState.selectedMonth !== 'ALL';
+  const btnDelBilan = document.getElementById('btnDeleteBilanMonth');
+  if (btnDelBilan) {
+    btnDelBilan.style.display = isMonthSelected ? 'inline-block' : 'none';
+    if (isMonthSelected) btnDelBilan.textContent = `🗑️ Vider M${AppState.selectedMonth}`;
+  }
+  const btnDelTCR = document.getElementById('btnDeleteTCRMonth');
+  if (btnDelTCR) {
+    btnDelTCR.style.display = isMonthSelected ? 'inline-block' : 'none';
+    if (isMonthSelected) btnDelTCR.textContent = `🗑️ Vider M${AppState.selectedMonth}`;
+  }
 }
 
 function setSelectedYear(year) {
@@ -5262,6 +5275,97 @@ function initImportPage() {
     });
   }
 
+  // Targeted Month Delete handler (Import page)
+  const btnCustomDel = document.getElementById('btnCustomDeleteMonth');
+  if (btnCustomDel) {
+    btnCustomDel.addEventListener('click', async () => {
+      const yr = document.getElementById('selectCustomDeleteYear')?.value || 2026;
+      const mo = document.getElementById('selectCustomDeleteMonth')?.value || 1;
+      const moPad = String(mo).padStart(2, '0');
+      if (!confirm(`⚠️ Confirmez-vous la suppression des écritures Grand Livre (FBL3N) du mois ${moPad}/${yr} ?\n\nCe mois sera réinitialisé à 0.`)) return;
+      try {
+        btnCustomDel.disabled = true;
+        btnCustomDel.textContent = 'Suppression...';
+        const res = await fetch('/api/import/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target: 'fbl3n', year: yr, month: mo })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Erreur lors de la suppression');
+        alert(`✅ ${data.message}`);
+        await loadSettingsPage();
+      } catch (err) {
+        alert(`❌ Erreur : ${err.message}`);
+      } finally {
+        btnCustomDel.disabled = false;
+        btnCustomDel.textContent = '🗑️ Vider ce mois';
+      }
+    });
+  }
+
+  // Quick Month Delete from Bilan Control Bar
+  const btnDeleteBilanMo = document.getElementById('btnDeleteBilanMonth');
+  if (btnDeleteBilanMo) {
+    btnDeleteBilanMo.addEventListener('click', async () => {
+      const yr = document.getElementById('selectBilanYear')?.value || AppState.selectedYear || 2026;
+      const mo = document.getElementById('selectBilanMonth')?.value || AppState.selectedMonth;
+      if (!mo || mo === 'ALL') return;
+      const moPad = String(mo).padStart(2, '0');
+      if (!confirm(`⚠️ Supprimer toutes les écritures FBL3N du mois ${moPad}/${yr} ?\n\nCe mois affichera 0,00 DA dans le Bilan.`)) return;
+      try {
+        btnDeleteBilanMo.disabled = true;
+        btnDeleteBilanMo.textContent = 'Vérification...';
+        const res = await fetch('/api/import/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target: 'fbl3n', year: yr, month: mo })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Erreur suppression');
+        alert(`✅ ${data.message}`);
+        AppState.bilanData = null;
+        loadBilanPage(true);
+      } catch (e) {
+        alert(`❌ Erreur : ${e.message}`);
+      } finally {
+        btnDeleteBilanMo.disabled = false;
+        btnDeleteBilanMo.textContent = `🗑️ Vider M${AppState.selectedMonth}`;
+      }
+    });
+  }
+
+  // Quick Month Delete from TCR Control Bar
+  const btnDeleteTCRMo = document.getElementById('btnDeleteTCRMonth');
+  if (btnDeleteTCRMo) {
+    btnDeleteTCRMo.addEventListener('click', async () => {
+      const yr = document.getElementById('selectTCRYear')?.value || AppState.selectedYear || 2026;
+      const mo = document.getElementById('selectTCRMonth')?.value || AppState.selectedMonth;
+      if (!mo || mo === 'ALL') return;
+      const moPad = String(mo).padStart(2, '0');
+      if (!confirm(`⚠️ Supprimer toutes les écritures FBL3N du mois ${moPad}/${yr} ?\n\nCe mois affichera 0,00 DA dans le TCR.`)) return;
+      try {
+        btnDeleteTCRMo.disabled = true;
+        btnDeleteTCRMo.textContent = 'Vérification...';
+        const res = await fetch('/api/import/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target: 'fbl3n', year: yr, month: mo })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Erreur suppression');
+        alert(`✅ ${data.message}`);
+        AppState.tcrData = null;
+        loadTCRPage(true);
+      } catch (e) {
+        alert(`❌ Erreur : ${e.message}`);
+      } finally {
+        btnDeleteTCRMo.disabled = false;
+        btnDeleteTCRMo.textContent = `🗑️ Vider M${AppState.selectedMonth}`;
+      }
+    });
+  }
+
   // Delete Balance period handler
   const btnDeleteBal = document.getElementById('btnDeleteBalancePeriod');
   if (btnDeleteBal) {
@@ -5743,10 +5847,13 @@ async function loadImportSummary() {
 
           if (selectDeleteGL) {
             data.glPeriods.forEach(p => {
-              const label = `${String(p.fiscal_month).padStart(2, '0')}/${p.fiscal_year}`;
+              const moNum = parseInt(p.fiscal_month, 10);
+              const yrNum = p.fiscal_year;
+              const moName = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'][moNum - 1] || `Mois ${moNum}`;
+              const label = `${String(moNum).padStart(2, '0')}/${yrNum}`;
               const opt = document.createElement('option');
               opt.value = label;
-              opt.textContent = `Mois ${label} (${Number(p.count || 0).toLocaleString('fr-FR')} écritures)`;
+              opt.textContent = `📅 ${label} (${moName} ${yrNum}) — ${Number(p.count || 0).toLocaleString('fr-FR')} écritures`;
               selectDeleteGL.appendChild(opt);
             });
           }

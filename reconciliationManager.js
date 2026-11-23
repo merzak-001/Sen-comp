@@ -4,6 +4,7 @@ const XLSX = require('xlsx');
 const sqlDb = require('./sqlDb');
 const fbl3nManager = require('./fbl3nManager');
 const balanceManager = require('./balanceManager');
+const SpreadsheetReader = require('./spreadsheetReader');
 
 class ReconciliationManager {
   constructor() {
@@ -260,10 +261,7 @@ class ReconciliationManager {
       throw new Error(`Fichier introuvable : ${filePath}`);
     }
 
-    const wb = XLSX.readFile(filePath, { cellFormula: false });
-    const sheetName = wb.SheetNames[0];
-    const ws = wb.Sheets[sheetName];
-    const rawRows = XLSX.utils.sheet_to_json(ws);
+    const { headers, rows: rawRows } = await SpreadsheetReader.readSpreadsheet(filePath, options);
 
     if (!rawRows || rawRows.length === 0) {
       throw new Error('Le fichier Excel FBL3N est vide.');
@@ -313,7 +311,7 @@ class ReconciliationManager {
           const { fiscalYear, fiscalMonth } = fbl3nManager.extractRowPeriod(r);
           if (fiscalYear === yr && fiscalMonth === mo) {
             newCount++;
-            const amt = Number(r['Montant en devise interne']) || 0;
+            const amt = fbl3nManager.parseAmount(r['Montant en devise interne']);
             newSum += amt;
             if (amt > 0) newDebit += amt;
             if (amt < 0) newCredit += Math.abs(amt);
@@ -392,7 +390,7 @@ class ReconciliationManager {
       throw new Error(`Fichier introuvable : ${filePath}`);
     }
 
-    const parsed = balanceManager.parseBalanceFile(filePath, periodOverride);
+    const parsed = await balanceManager.parseBalanceFile(filePath, periodOverride);
     const periodKey = parsed.periodKey;
     const newRecords = parsed.records;
 

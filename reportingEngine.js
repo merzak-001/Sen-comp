@@ -208,7 +208,7 @@ class ReportingEngine {
           ],
           spacing: { after: 120 }
         });
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const doc = new Document({
@@ -323,10 +323,10 @@ class ReportingEngine {
           this.cellHeader("PART %", 15, AlignmentType.RIGHT)
         ]
       }),
-      this.rowItem("Marchandises consommées (Revente Gros Débit)", (c.reventeGD * m).toLocaleString('fr-FR'), `${(c.reventeGD/c.total2026*100).toFixed(2)} %`),
-      this.rowItem("Matières et fournitures consommées", (c.matieres * m).toLocaleString('fr-FR'), `${(c.matieres/c.total2026*100).toFixed(2)} %`),
-      this.rowItem("Achats consommés des pièces de rechange maintenance", (c.maintenance * m).toLocaleString('fr-FR'), `${(c.maintenance/c.total2026*100).toFixed(2)} %`),
-      this.rowItem("Autres achats consommés (Bureau, Eau, Énergie)", (c.autres * m).toLocaleString('fr-FR'), `${(c.autres/c.total2026*100).toFixed(2)} %`),
+      this.rowItem("Marchandises consommées (Revente Gros Débit)", (c.reventeGD * m).toLocaleString('fr-FR'), `${(c.reventeGD / c.total2026 * 100).toFixed(2)} %`),
+      this.rowItem("Matières et fournitures consommées", (c.matieres * m).toLocaleString('fr-FR'), `${(c.matieres / c.total2026 * 100).toFixed(2)} %`),
+      this.rowItem("Achats consommés des pièces de rechange maintenance", (c.maintenance * m).toLocaleString('fr-FR'), `${(c.maintenance / c.total2026 * 100).toFixed(2)} %`),
+      this.rowItem("Autres achats consommés (Bureau, Eau, Énergie)", (c.autres * m).toLocaleString('fr-FR'), `${(c.autres / c.total2026 * 100).toFixed(2)} %`),
       new TableRow({
         children: [
           this.cellHeader("TOTAL DES ACHATS CONSOMMÉS", 60),
@@ -537,7 +537,7 @@ class ReportingEngine {
       }
       const balCheck = await sqlDb.query(balCountSql);
       balRowsCount = Number(balCheck[0]?.cnt) || 0;
-    } catch (e) {}
+    } catch (e) { }
 
     // CRITICAL: If a specific month is requested and NO DATA exists for that month in the database, return empty map (all 0)!
     if (monthNum !== null && !isNaN(monthNum) && glRowsCount === 0 && balRowsCount === 0) {
@@ -593,7 +593,7 @@ class ReportingEngine {
               LEFT JOIN ChartOfAccounts c ON b.boal_account = c.boal_account
               WHERE b.period_key = '01${yearNum}' OR b.period_key LIKE '%${yearNum}'
             `);
-          } catch (e) {}
+          } catch (e) { }
         }
 
         const openMap = new Map();
@@ -667,7 +667,7 @@ class ReportingEngine {
           FROM GeneralLedgerBalances b
           LEFT JOIN ChartOfAccounts c ON b.boal_account = c.boal_account
           WHERE `;
-        
+
         if (monthNum !== null && !isNaN(monthNum)) {
           const mm = String(monthNum).padStart(2, '0');
           balSql += `b.period_key = '${mm}${yearNum}'`;
@@ -1332,7 +1332,7 @@ class ReportingEngine {
       for (let m = 0; m < 12; m++) {
         const mm = String(m + 1).padStart(2, '0');
         const pKey = `${mm}${y}`;
-        
+
         let ouvMonth = 0;
         let clotMonth = 0;
         let foundPeriod = false;

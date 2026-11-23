@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const XLSX = require('xlsx');
 const sqlDb = require('./sqlDb');
+const SpreadsheetReader = require('./spreadsheetReader');
 
 class BalanceManager {
   constructor() {
@@ -107,15 +108,12 @@ class BalanceManager {
   /**
    * Parse any SAP Balance file (RFSSLD00 or tabular)
    */
-  parseBalanceFile(filePath, periodOverride = null) {
+  async parseBalanceFile(filePath, periodOverride = null) {
     if (!fs.existsSync(filePath)) {
       throw new Error(`Fichier introuvable : ${filePath}`);
     }
 
-    const wb = XLSX.readFile(filePath, { cellFormula: false });
-    const sheetName = wb.SheetNames[0];
-    const ws = wb.Sheets[sheetName];
-    const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    const rawRows = await SpreadsheetReader.readSpreadsheetAsArrays(filePath);
 
     if (!rawRows || rawRows.length === 0) {
       throw new Error('Le fichier est vide.');
@@ -278,7 +276,7 @@ class BalanceManager {
       const fullPath = path.join(this.osApproDir, f);
       try {
         console.log(`[BalanceManager] Importing ${f}...`);
-        const parsed = this.parseBalanceFile(fullPath);
+        const parsed = await this.parseBalanceFile(fullPath);
         const saveRes = await this.saveBalanceToDb(parsed.records, parsed.periodKey, f);
         results.push({
           file: f,

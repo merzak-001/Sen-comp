@@ -1080,7 +1080,7 @@ app.post('/api/balance/upload', upload.single('balanceFile'), async (req, res) =
     }
 
     const periodKeyOverride = req.body.periodKey || null;
-    const parsed = balanceManager.parseBalanceFile(req.file.path, periodKeyOverride);
+    const parsed = await balanceManager.parseBalanceFile(req.file.path, periodKeyOverride);
     const saveRes = await balanceManager.saveBalanceToDb(parsed.records, parsed.periodKey, req.file.originalname);
     await reportingEngine.loadMasterFiles();
 
@@ -1440,10 +1440,11 @@ app.post('/api/import/delete', async (req, res) => {
       }
     } else if (target === 'balance') {
       if (periodKey) {
+        const safePeriodKey = String(periodKey).replace(/'/g, "''").trim();
         const delRes = await sqlDb.query(`
-          DELETE FROM GeneralLedgerBalances WHERE period_key = ?;
+          DELETE FROM GeneralLedgerBalances WHERE period_key = '${safePeriodKey}';
           SELECT @@ROWCOUNT AS affected;
-        `, [String(periodKey).trim()]);
+        `);
         deletedCount = delRes[0]?.affected || 0;
         message = `Soldes de Balance supprimés pour la période ${periodKey} (${deletedCount} comptes).`;
       } else {

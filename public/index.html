@@ -885,13 +885,42 @@
                       <span class="status-pulse-dot" style="background: #ea580c;"></span>
                       Supprimer des écritures Grand Livre (FBL3N)
                     </div>
-                    <p style="font-size: 11.5px; color: #64748b; margin: 0 0 10px 0;">Sélectionnez une période ou videz tout le Grand Livre :</p>
-                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                      <select id="selectDeleteGLPeriod" class="form-input" style="padding: 6px 10px; font-size: 12px; flex: 1; min-width: 150px;">
+                    <p style="font-size: 11.5px; color: #64748b; margin: 0 0 10px 0;">Sélectionnez une période enregistrée ou videz tout le Grand Livre :</p>
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
+                      <select id="selectDeleteGLPeriod" class="form-input" style="padding: 6px 10px; font-size: 12px; flex: 1; min-width: 170px;">
                         <option value="ALL">Toutes les périodes GL (Vider tout)</option>
                       </select>
                       <button type="button" class="btn btn-secondary btn-sm" id="btnDeleteGLPeriod" style="border-color: #ea580c; color: #c2410c; font-weight: 700;">
-                        Supprimer GL
+                        Supprimer cette période
+                      </button>
+                    </div>
+
+                    <!-- Targeted Month Delete Picker -->
+                    <div style="border-top: 1px dashed #fed7aa; padding-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                      <span style="font-size: 11px; font-weight: 700; color: #9a3412; display: flex; align-items: center; gap: 4px;">
+                        <span>🎯</span> Supprimer par mois :
+                      </span>
+                      <select id="selectCustomDeleteYear" class="form-input" style="padding: 4px 8px; font-size: 12px; width: 85px;">
+                        <option value="2026">2026</option>
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                      </select>
+                      <select id="selectCustomDeleteMonth" class="form-input" style="padding: 4px 8px; font-size: 12px; width: 130px;">
+                        <option value="1">01 - Janvier</option>
+                        <option value="2">02 - Février</option>
+                        <option value="3">03 - Mars</option>
+                        <option value="4">04 - Avril</option>
+                        <option value="5">05 - Mai</option>
+                        <option value="6">06 - Juin</option>
+                        <option value="7">07 - Juillet</option>
+                        <option value="8">08 - Août</option>
+                        <option value="9">09 - Septembre</option>
+                        <option value="10">10 - Octobre</option>
+                        <option value="11">11 - Novembre</option>
+                        <option value="12">12 - Décembre</option>
+                      </select>
+                      <button type="button" class="btn btn-outline-danger btn-sm" id="btnCustomDeleteMonth" style="font-size: 11.5px; padding: 4px 10px; font-weight: 700;">
+                        🗑️ Vider ce mois
                       </button>
                     </div>
                   </div>
@@ -1110,7 +1139,12 @@
 
             <div class="ef-control-group">
               <span class="ef-label">⏱️ Période</span>
-              <select id="selectBilanMonth" class="ef-select"></select>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <select id="selectBilanMonth" class="ef-select"></select>
+                <button type="button" class="btn btn-sm btn-outline-danger btn-delete-month-quick" id="btnDeleteBilanMonth" title="Supprimer les écritures de ce mois dans la base de données" style="display: none; padding: 5px 8px; font-size: 11px; white-space: nowrap;">
+                  🗑️ Vider mois
+                </button>
+              </div>
             </div>
 
             <div class="ef-control-group">
@@ -1265,7 +1299,12 @@
 
             <div class="ef-control-group">
               <span class="ef-label">⏱️ Période</span>
-              <select id="selectTCRMonth" class="ef-select"></select>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <select id="selectTCRMonth" class="ef-select"></select>
+                <button type="button" class="btn btn-sm btn-outline-danger btn-delete-month-quick" id="btnDeleteTCRMonth" title="Supprimer les écritures de ce mois dans la base de données" style="display: none; padding: 5px 8px; font-size: 11px; white-space: nowrap;">
+                  🗑️ Vider mois
+                </button>
+              </div>
             </div>
 
             <div class="ef-control-group">

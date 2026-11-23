@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const XLSX = require('xlsx');
 const sqlDb = require('./sqlDb');
+const SpreadsheetReader = require('./spreadsheetReader');
 
 class FBL3NManager {
   constructor() {
@@ -21,11 +22,33 @@ class FBL3NManager {
       if (!isNaN(v.getTime())) return v.toISOString().split('T')[0];
     }
     const s = String(v).trim();
+    const num = Number(s);
+    if (!isNaN(num) && num > 30000 && num < 80000) {
+      const d = new Date(Math.round((num - 25569) * 86400 * 1000));
+      if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+    }
     const m1 = s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
     if (m1) return `${m1[3]}-${m1[2].padStart(2, '0')}-${m1[1].padStart(2, '0')}`;
     const m2 = s.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})$/);
     if (m2) return `${m2[1]}-${m2[2].padStart(2, '0')}-${m2[3].padStart(2, '0')}`;
     return null;
+  }
+
+  parseAmount(v) {
+    if (typeof v === 'number') return v;
+    if (!v) return 0;
+    let s = String(v).trim().replace(/\s/g, '').replace(/\u00a0/g, '');
+    if (s.includes(',') && !s.includes('.')) {
+      s = s.replace(',', '.');
+    } else if (s.includes(',') && s.includes('.')) {
+      if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+        s = s.replace(/\./g, '').replace(',', '.');
+      } else {
+        s = s.replace(/,/g, '');
+      }
+    }
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
   }
 
   parseDate(v) {
@@ -85,26 +108,13 @@ class FBL3NManager {
    */
   async importFromExcel(source, options = {}) {
     const startTime = Date.now();
-    let wb;
-    if (Buffer.isBuffer(source)) {
-      wb = XLSX.read(source, { type: 'buffer' });
-    } else {
-      if (!fs.existsSync(source)) {
-        throw new Error(`Fichier introuvable : ${source}`);
-      }
-      wb = XLSX.readFile(source);
-    }
-
-    // Pick first non-empty sheet
-    const sheetName = wb.SheetNames[0];
-    const sheet = wb.Sheets[sheetName];
-    const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    const { headers, rows: rawRows } = await SpreadsheetReader.readSpreadsheet(source, options);
 
     if (!rawRows || rawRows.length === 0) {
-      throw new Error(`Aucune écriture trouvée dans la feuille ${sheetName}`);
+      throw new Error(`Aucune écriture trouvée dans le fichier`);
     }
 
-    console.log(`[FBL3NManager] Read ${rawRows.length} rows from Excel sheet ${sheetName}.`);
+    console.log(`[FBL3NManager] Read ${rawRows.length} rows from file (headers: ${headers.length}).`);
 
     // Prepare table if not exists
     await this.ensureTableSchema();
@@ -183,9 +193,9 @@ class FBL3NManager {
       const counterparty = String(r['Compte contrepartie'] || r['Offsetting account'] || '').trim();
       const docType = String(r['Type de pièce'] || r['Document Type'] || '').trim();
       const postKey = String(r['Clé comptabilisation'] || '').trim();
-      const amtLocal = Number(r['Montant en devise interne']) || 0;
+      const amtLocal = this.parseAmount(r['Montant en devise interne']);
       const currLocal = String(r['Devise interne'] || 'DZD').trim();
-      const amtDoc = Number(r['Montant devise document']) || amtLocal;
+      const amtDoc = this.parseAmount(r['Montant devise document']) || amtLocal;
       const currDoc = String(r['Devise pièce'] || currLocal).trim();
       const taxCode = String(r['Code TVA'] || '').trim();
       const clearingDoc = String(r['Pièce rapprochement'] || '').trim();
