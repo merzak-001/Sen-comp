@@ -6130,6 +6130,47 @@ function drilldownAccountGL(boalAccount) {
 
 window.drilldownAccountGL = drilldownAccountGL;
 
+// ==========================================================================
+// UI/UX PRO MAX - THEME INITIALIZATION & SWITCHER
+// ==========================================================================
+function initThemeEngine() {
+  const savedTheme = localStorage.getItem('sensus_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeIcons(savedTheme);
+
+  const toggleBtn = document.getElementById('btnToggleTheme');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('sensus_theme', next);
+      updateThemeIcons(next);
+    });
+  }
+}
+
+function updateThemeIcons(theme) {
+  const sunIcon = document.getElementById('themeIconSun');
+  const moonIcon = document.getElementById('themeIconMoon');
+  if (sunIcon && moonIcon) {
+    if (theme === 'dark') {
+      sunIcon.style.display = 'block';
+      moonIcon.style.display = 'none';
+    } else {
+      sunIcon.style.display = 'none';
+      moonIcon.style.display = 'block';
+    }
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initThemeEngine);
+} else {
+  initThemeEngine();
+}
+
+
 
 
 

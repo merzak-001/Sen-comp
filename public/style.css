@@ -3262,3 +3262,371 @@ body.role-restricted #page-fournisseurs {
 
 
 
+
+/* ==========================================================================
+   UI/UX PRO MAX - MODERN EXECUTIVE DESIGN SYSTEM & THEME ENGINE
+   ========================================================================== */
+
+/* Enhanced Variables & Color Tokens */
+:root {
+  --primary-50: #f0f7ff;
+  --primary-100: #e0effe;
+  --primary-200: #bae0fd;
+  --primary-300: #7cc5fb;
+  --primary-400: #36a4f7;
+  --primary-500: #0c87eb;
+  --primary-600: #026cc7;
+  --primary-700: #0356a1;
+  --primary-800: #074984;
+  --primary-900: #0b3d6e;
+
+  /* Glassmorphism & Translucency */
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(226, 232, 240, 0.85);
+  --glass-blur: blur(20px);
+  --glass-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+
+  /* Modern Card Elevations */
+  --pro-card-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03), 0 6px 16px -2px rgba(15, 23, 42, 0.04), 0 12px 32px -4px rgba(15, 23, 42, 0.03);
+  --pro-card-hover: 0 20px 40px -8px rgba(15, 23, 42, 0.08), 0 8px 16px -4px rgba(15, 23, 42, 0.04);
+  --pro-pill-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.06), 0 1px 3px 0 rgba(15, 23, 42, 0.04);
+
+  /* Modern Gradients */
+  --grad-primary: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #4f46e5 100%);
+  --grad-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --grad-accent: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%);
+  --grad-dark: linear-gradient(180deg, #081220 0%, #0c1a2e 50%, #0f233d 100%);
+  --grad-surface: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+}
+
+/* Dark Theme Variables */
+[data-theme="dark"] {
+  --bg-app: #090e17;
+  --card-bg: #0f172a;
+  --slate-dark: #f8fafc;
+  --slate: #94a3b8;
+  --border: #1e293b;
+  --border-light: #1e293b;
+  --border-subtle: #172033;
+  --navy: #f8fafc;
+  --navy-deep: #020617;
+  --glass-bg: rgba(15, 23, 42, 0.82);
+  --glass-border: rgba(30, 41, 59, 0.8);
+  --glass-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.5);
+  --pro-card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+  --pro-card-hover: 0 12px 30px -4px rgba(0, 0, 0, 0.6);
+  --grad-surface: linear-gradient(180deg, #0f172a 0%, #0b1120 100%);
+}
+
+[data-theme="dark"] body {
+  background-color: var(--bg-app);
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .main-content {
+  background-color: var(--bg-app);
+}
+
+[data-theme="dark"] .topbar {
+  background: rgba(15, 23, 42, 0.88);
+  border-bottom-color: #1e293b;
+}
+
+[data-theme="dark"] .header-control-pill,
+[data-theme="dark"] .styled-header-select,
+[data-theme="dark"] .unit-pill-box,
+[data-theme="dark"] .user-avatar-pill {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .unit-pills {
+  background-color: #0f172a !important;
+}
+
+[data-theme="dark"] .unit-pill {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .unit-pill.active {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .panel-card,
+[data-theme="dark"] .stat-item,
+[data-theme="dark"] .ef-kpi-card,
+[data-theme="dark"] .ef-table-card,
+[data-theme="dark"] .page-header,
+[data-theme="dark"] .ef-control-bar,
+[data-theme="dark"] .ef-table-header {
+  background: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .report-table th {
+  background-color: #0b1220;
+  border-color: #1e293b;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .report-table td {
+  border-color: #1e293b;
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .report-table tbody tr:nth-child(even) {
+  background-color: rgba(30, 41, 59, 0.35);
+}
+
+[data-theme="dark"] .report-table tbody tr:hover {
+  background-color: rgba(56, 189, 248, 0.08) !important;
+}
+
+[data-theme="dark"] .btn-outline {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .btn-outline:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   UI/UX PRO MAX POLISH: MICRO-INTERACTIONS & ELEVATIONS
+   ========================================================================== */
+
+/* Ultra-smooth interactive focus & active states */
+button, select, input, .nav-item, .nav-subitem, .stat-item, .ef-kpi-card, .panel-card {
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Sidebar Luxury Enhancement */
+.sidebar {
+  background: var(--grad-dark) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 4px 0 28px rgba(0, 0, 0, 0.18) !important;
+}
+
+.brand-logo-box {
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.brand-logo-box:hover {
+  transform: translateY(-2px) scale(1.04) !important;
+}
+
+.nav-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  bottom: 15%;
+  width: 3.5px;
+  background: #38bdf8;
+  border-radius: 0 4px 4px 0;
+  transform: scaleY(0);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.nav-item:hover::before {
+  transform: scaleY(0.7);
+}
+
+.nav-item.active::before {
+  transform: scaleY(1);
+  background: #ffffff;
+}
+
+.nav-item.active {
+  background: var(--grad-primary) !important;
+  box-shadow: 0 4px 18px rgba(2, 132, 199, 0.38) !important;
+}
+
+/* Topbar Deluxe Glass Finish */
+.topbar {
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04) !important;
+}
+
+.topbar-left h1 {
+  background: linear-gradient(135deg, #091e3a 0%, #0284c7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 17.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.4px !important;
+}
+
+[data-theme="dark"] .topbar-left h1 {
+  background: linear-gradient(135deg, #ffffff 0%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Control Pills Pro Max */
+.header-control-pill {
+  border-radius: 9999px !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  box-shadow: var(--pro-pill-shadow) !important;
+  background: #ffffff;
+  padding: 5px 13px !important;
+}
+
+.header-control-pill:hover {
+  border-color: #0284c7 !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.14) !important;
+  transform: translateY(-1px);
+}
+
+/* Pro Buttons */
+.btn {
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.2px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn:hover {
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn:active {
+  transform: translateY(0.5px) !important;
+}
+
+.btn-primary {
+  background: var(--grad-primary) !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.32) !important;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.45) !important;
+}
+
+/* Quick Search / Filter Bar Glow */
+input[type="text"]:focus, select:focus {
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.18) !important;
+}
+
+/* Deluxe KPI Cards */
+.stat-item, .ef-kpi-card {
+  border-radius: 16px !important;
+  box-shadow: var(--pro-card-shadow) !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  background: var(--grad-surface) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-item:hover, .ef-kpi-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: var(--pro-card-hover) !important;
+}
+
+.stat-item .stat-val, .ef-kpi-card .ef-kpi-val {
+  font-family: 'JetBrains Mono', var(--font-mono) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* Deluxe Financial & Analysis Tables */
+.report-table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.report-table thead th {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  font-weight: 800 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.05em !important;
+  padding: 12px 16px !important;
+  border: none !important;
+}
+
+.report-table tbody tr {
+  transition: all 0.15s ease !important;
+}
+
+.report-table tbody tr:hover {
+  background-color: #f0f9ff !important;
+}
+
+.report-table tbody td {
+  padding: 10px 16px !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+/* Sticky Headers with subtle blur */
+.report-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Badge & Tag Styling */
+.badge, .nav-badge-pill, .unit-current-badge {
+  font-weight: 700 !important;
+  letter-spacing: 0.03em !important;
+  border-radius: 9999px !important;
+}
+
+/* Theme Switcher Button */
+.theme-toggle-btn {
+  background: transparent;
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  border-radius: 9999px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #475569;
+  transition: all 0.2s ease;
+  margin-left: 4px;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(2, 132, 199, 0.08);
+  border-color: #0284c7;
+  color: #0284c7;
+  transform: rotate(15deg);
+}
+
+[data-theme="dark"] .theme-toggle-btn {
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .theme-toggle-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
