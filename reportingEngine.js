@@ -493,7 +493,8 @@ class ReportingEngine {
    */
   async getAccountsForReport(year, month = 'ALL', source = 'balance') {
     const yearNum = parseInt(year, 10);
-    const monthNum = (month && month !== 'ALL') ? parseInt(month, 10) : null;
+    const isAllMonths = (!month || month === 'ALL');
+    const monthNum = !isAllMonths ? parseInt(month, 10) : null;
     const accountMap = new Map();
 
     // 1. Ensure Chart of Accounts is loaded from SQL Server
@@ -516,17 +517,36 @@ class ReportingEngine {
       }
     }
 
-    // 2. Discover available data sources in SQL Server for this year
+    // 2. Discover available data sources in SQL Server for this year and month
     let glRowsCount = 0;
     let balRowsCount = 0;
     try {
-      const glCheck = await sqlDb.query(`SELECT COUNT(*) AS cnt FROM FBL3NLineItems WHERE fiscal_year = ${yearNum} AND doc_number <> ''`);
+      let glCountSql = `SELECT COUNT(*) AS cnt FROM FBL3NLineItems WHERE fiscal_year = ${yearNum} AND doc_number <> ''`;
+      if (monthNum !== null && !isNaN(monthNum)) {
+        glCountSql += ` AND fiscal_month = ${monthNum}`;
+      }
+      const glCheck = await sqlDb.query(glCountSql);
       glRowsCount = Number(glCheck[0]?.cnt) || 0;
-      const balCheck = await sqlDb.query(`SELECT COUNT(*) AS cnt FROM GeneralLedgerBalances WHERE period_key LIKE '%${yearNum}' OR period_key = '${yearNum}'`);
+
+      let balCountSql = `SELECT COUNT(*) AS cnt FROM GeneralLedgerBalances WHERE `;
+      if (monthNum !== null && !isNaN(monthNum)) {
+        const mm = String(monthNum).padStart(2, '0');
+        balCountSql += `period_key = '${mm}${yearNum}'`;
+      } else {
+        balCountSql += `(period_key LIKE '%${yearNum}' OR period_key = '${yearNum}')`;
+      }
+      const balCheck = await sqlDb.query(balCountSql);
       balRowsCount = Number(balCheck[0]?.cnt) || 0;
     } catch (e) {}
 
-    // Auto-fallback: if requested source has no data but the other does, use the one with data
+    // CRITICAL: If a specific month is requested and NO DATA exists for that month in the database, return empty map (all 0)!
+    if (monthNum !== null && !isNaN(monthNum) && glRowsCount === 0 && balRowsCount === 0) {
+      accountMap.effectiveSource = source;
+      accountMap.hasData = false;
+      return accountMap;
+    }
+
+    // Auto-fallback: if requested source has no data for this period but the other does, use the one with data
     let effectiveSource = source;
     if (source === 'balance' && balRowsCount === 0 && glRowsCount > 0) {
       effectiveSource = 'gl';
@@ -550,7 +570,7 @@ class ReportingEngine {
           WHERE f.fiscal_year = ${yearNum} AND f.doc_number <> ''
         `;
         if (monthNum !== null && !isNaN(monthNum)) {
-          sql += ` AND f.fiscal_month <= ${monthNum}`;
+          sql += ` AND f.fiscal_month = ${monthNum}`;
         }
         sql += ` GROUP BY f.account, c.scf_account, c.description`;
 
@@ -563,16 +583,18 @@ class ReportingEngine {
           });
         }
 
-        // Get Opening Balances from SQL Server GeneralLedgerBalances if available
+        // Only load opening balances for annual reports, or if GL has data and it's a balance sheet
         let openBalRows = [];
-        try {
-          openBalRows = await sqlDb.query(`
-            SELECT b.boal_account, b.report_initial, ISNULL(b.scf_account, c.scf_account) AS scf_account, ISNULL(b.account_desc, c.description) AS account_desc
-            FROM GeneralLedgerBalances b
-            LEFT JOIN ChartOfAccounts c ON b.boal_account = c.boal_account
-            WHERE b.period_key = '01${yearNum}' OR b.period_key LIKE '%${yearNum}'
-          `);
-        } catch (e) {}
+        if (isAllMonths) {
+          try {
+            openBalRows = await sqlDb.query(`
+              SELECT b.boal_account, b.report_initial, ISNULL(b.scf_account, c.scf_account) AS scf_account, ISNULL(b.account_desc, c.description) AS account_desc
+              FROM GeneralLedgerBalances b
+              LEFT JOIN ChartOfAccounts c ON b.boal_account = c.boal_account
+              WHERE b.period_key = '01${yearNum}' OR b.period_key LIKE '%${yearNum}'
+            `);
+          } catch (e) {}
+        }
 
         const openMap = new Map();
         openBalRows.forEach(r => {
@@ -644,17 +666,19 @@ class ReportingEngine {
             b.period_key
           FROM GeneralLedgerBalances b
           LEFT JOIN ChartOfAccounts c ON b.boal_account = c.boal_account
-          WHERE (b.period_key LIKE '%${yearNum}' OR b.period_key = '${yearNum}')
-        `;
+          WHERE `;
+        
         if (monthNum !== null && !isNaN(monthNum)) {
           const mm = String(monthNum).padStart(2, '0');
-          balSql += ` AND (b.period_key = '${mm}${yearNum}')`;
+          balSql += `b.period_key = '${mm}${yearNum}'`;
+        } else {
+          balSql += `(b.period_key LIKE '%${yearNum}' OR b.period_key = '${yearNum}')`;
         }
         balSql += ` ORDER BY b.period_key DESC`;
 
         const dbBalances = await sqlDb.query(balSql);
         if (Array.isArray(dbBalances) && dbBalances.length > 0) {
-          // If multiple periods match, keep the latest period for each account
+          // If multiple periods match (only in annual mode), keep the latest period for each account
           dbBalances.forEach(item => {
             const boal = String(item.boal || '').trim();
             if (boal && !accountMap.has(boal)) {
@@ -677,21 +701,9 @@ class ReportingEngine {
         console.warn(`[ReportingEngine] Failed to query SQL Server balances for ${yearNum}:`, balErr.message);
       }
 
-      // Fallback to in-memory balances if SQL query returned empty
-      if (accountMap.size === 0) {
-        let pKey = null;
-        if (monthNum !== null && !isNaN(monthNum)) {
-          const mm = String(monthNum).padStart(2, '0');
-          const candidate = `${mm}${yearNum}`;
-          if (this.balancesByPeriod && this.balancesByPeriod.has(candidate)) {
-            pKey = candidate;
-          }
-        }
-
-        let balMap = (pKey && this.balancesByPeriod && this.balancesByPeriod.has(pKey)) 
-          ? this.balancesByPeriod.get(pKey) 
-          : this.getBalanceForYear(yearNum);
-
+      // Fallback to in-memory balances ONLY if annual report ('ALL') is requested
+      if (accountMap.size === 0 && isAllMonths) {
+        let balMap = this.getBalanceForYear(yearNum);
         if (balMap && balMap.size > 0) {
           balMap.forEach((item, boal) => {
             const chart = this.chartOfAccounts?.get(boal) || { dz: '', desc: '' };
@@ -711,6 +723,7 @@ class ReportingEngine {
     }
 
     accountMap.effectiveSource = effectiveSource;
+    accountMap.hasData = (accountMap.size > 0);
     return accountMap;
   }
 
@@ -723,7 +736,7 @@ class ReportingEngine {
 
     const balN = await this.getAccountsForReport(yearN, targetMonth, source);
     const balN1 = yearN_1 ? await this.getAccountsForReport(yearN_1, targetMonth, source) : new Map();
-    const hasData = balN.size > 0 || balN1.size > 0;
+    const hasData = (balN.size > 0);
 
     // Official hardcoded numbers completely removed for dynamic database reporting
 
@@ -996,7 +1009,7 @@ class ReportingEngine {
 
     const balN = await this.getAccountsForReport(yearN, targetMonth, source);
     const balN1 = yearN_1 ? await this.getAccountsForReport(yearN_1, targetMonth, source) : new Map();
-    const hasData = balN.size > 0 || balN1.size > 0;
+    const hasData = (balN.size > 0);
 
     const tcr = await this.getTCRReport(targetYear, targetMonth, source);
     const resNetN = tcr.kpis.resNetN || 0;

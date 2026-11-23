@@ -2230,10 +2230,14 @@ function renderTCRTable(data) {
 
   const elHeaderSub = document.getElementById('tcrHeaderSubtitle');
   if (elHeaderSub) {
-    const srcDesc = activeSource === 'gl' ? 'Grand Livre FBL3N (Écritures individuelles)' : 'Balance Générale RFSSLD00 (Soldes cumulés)';
-    elHeaderSub.textContent = hasN1
-      ? `Soldes Intermédiaires de Gestion (SIG) de SENSUS SPA : Production, Consommation, VA, EBE, Résultat Opérationnel et Résultat Net (Exercice ${yearN} vs ${yearN1}) • Source : ${srcDesc}.`
-      : `Soldes Intermédiaires de Gestion (SIG) de SENSUS SPA : Production, Consommation, VA, EBE, Résultat Opérationnel et Résultat Net (Exercice ${yearN}) • Source : ${srcDesc}.`;
+    if (!data.hasData) {
+      elHeaderSub.innerHTML = `<span style="color:#d97706; font-weight:700;">⚠️ Aucune écriture enregistrée en base pour le mois sélectionné — Soldes à 0,00 DA.</span>`;
+    } else {
+      const srcDesc = activeSource === 'gl' ? 'Grand Livre FBL3N (Écritures individuelles)' : 'Balance Générale RFSSLD00 (Soldes cumulés)';
+      elHeaderSub.textContent = hasN1
+        ? `Soldes Intermédiaires de Gestion (SIG) de SENSUS SPA : Production, Consommation, VA, EBE, Résultat Opérationnel et Résultat Net (Exercice ${yearN} vs ${yearN1}) • Source : ${srcDesc}.`
+        : `Soldes Intermédiaires de Gestion (SIG) de SENSUS SPA : Production, Consommation, VA, EBE, Résultat Opérationnel et Résultat Net (Exercice ${yearN}) • Source : ${srcDesc}.`;
+    }
   }
 
   const elTableSub = document.getElementById('tcrTableSubtitle');
@@ -2629,10 +2633,14 @@ function renderBilanTables(data) {
 
   const elHeaderSub = document.getElementById('bilanHeaderSubtitle');
   if (elHeaderSub) {
-    const srcDesc = activeSource === 'gl' ? 'Grand Livre FBL3N (Écritures individuelles)' : 'Balance Générale RFSSLD00 (Soldes cumulés)';
-    elHeaderSub.textContent = hasN1
-      ? `Situation patrimoniale officielle (Série G nº2) • Comparatif Exercice ${yearN} (N) vs Exercice ${yearN1} (N-1) • Source : ${srcDesc}.`
-      : `Situation patrimoniale officielle (Série G nº2) • Données Officielles Exercice ${yearN} (N) • Source : ${srcDesc}.`;
+    if (!data.hasData) {
+      elHeaderSub.innerHTML = `<span style="color:#d97706; font-weight:700;">⚠️ Aucune écriture enregistrée en base pour le mois sélectionné — Soldes à 0,00 DA.</span>`;
+    } else {
+      const srcDesc = activeSource === 'gl' ? 'Grand Livre FBL3N (Écritures individuelles)' : 'Balance Générale RFSSLD00 (Soldes cumulés)';
+      elHeaderSub.textContent = hasN1
+        ? `Situation patrimoniale officielle (Série G nº2) • Comparatif Exercice ${yearN} (N) vs Exercice ${yearN1} (N-1) • Source : ${srcDesc}.`
+        : `Situation patrimoniale officielle (Série G nº2) • Données Officielles Exercice ${yearN} (N) • Source : ${srcDesc}.`;
+    }
   }
 
   // Update Dynamic Table Headers & Column Visibility
