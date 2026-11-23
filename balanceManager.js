@@ -16,7 +16,7 @@ class BalanceManager {
   parseAmount(val) {
     if (val === null || val === undefined) return 0;
     if (typeof val === 'number') return isNaN(val) ? 0 : Math.round(val * 100) / 100;
-    
+
     let s = String(val).trim();
     if (!s || s === '-' || s === '.-' || s === '-   ') return 0;
 
@@ -64,7 +64,7 @@ class BalanceManager {
     // 1. Inspect first 12 rows for SAP RFSSLD00 period strings
     for (let i = 0; i < Math.min(12, fileRows.length); i++) {
       const line = Array.isArray(fileRows[i]) ? fileRows[i].join(' ') : String(fileRows[i] || '');
-      
+
       // Matches "Périodes reporting 04-04 2025" or "Périodes reporting 12-16 2025"
       const pMatch = line.match(/P[ée]riodes reporting\s*(\d{1,2})\s*-\s*(\d{1,2})\s+(\d{4})/i);
       if (pMatch) {
@@ -137,7 +137,7 @@ class BalanceManager {
       if (!row || !Array.isArray(row) || row.length === 0) continue;
 
       const strRow = Array.from({ length: row.length }, (_, i) => String(row[i] || '').toLowerCase().trim());
-      
+
       const acctIdx = strRow.findIndex(c => c && (c.includes('cpte gén') || c === 'compte' || c.includes('account')));
       const descIdx = strRow.findIndex(c => c && (c.includes('désignation') || c.includes('designation') || c.includes('libellé') || c.includes('intitulé')));
       const soldeIdx = strRow.findIndex(c => c && (c.includes('solde cum') || c === 'solde' || c.includes('balance')));
@@ -146,7 +146,7 @@ class BalanceManager {
         headerRowIdx = r;
         colMap.account = acctIdx;
         colMap.desc = descIdx !== -1 ? descIdx : acctIdx + 1;
-        
+
         // Find financial columns
         for (let c = 0; c < strRow.length; c++) {
           const val = strRow[c] || '';
@@ -344,7 +344,7 @@ class BalanceManager {
    */
   async getBalances(periodKey, filterClass = null, search = null) {
     let where = `WHERE period_key = '${periodKey.replace(/'/g, "''")}'`;
-    
+
     if (filterClass) {
       const cls = String(filterClass).trim();
       where += ` AND (boal_account LIKE '${cls}%' OR scf_account LIKE '${cls}%')`;

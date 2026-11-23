@@ -202,7 +202,7 @@ app.post('/api/upload', upload.fields([
     try {
       fs.unlinkSync(f41Path);
       fs.unlinkSync(fbl3nPath);
-    } catch (e) {}
+    } catch (e) { }
 
     res.json({
       success: true,
@@ -243,7 +243,7 @@ app.get('/api/invoices', async (req, res) => {
       year: req.query.year,
       month: req.query.month
     };
-    
+
     // Primary: Query SQL Server (SensusSAPDB)
     try {
       const sqlList = await sqlDb.getInvoicesFromDb(filters);
@@ -318,7 +318,7 @@ app.post('/api/invoices/bulk-delete', async (req, res) => {
     for (const p of pieces) {
       try {
         await sqlDb.deleteInvoiceInDb(p);
-      } catch (sqlErr) {}
+      } catch (sqlErr) { }
     }
     res.json({ success: true, count: result.count });
   } catch (err) {
@@ -356,7 +356,7 @@ app.post('/api/invoices/bulk-update', async (req, res) => {
       try {
         storage.updateCategory(p, category, false);
         count++;
-      } catch (e) {}
+      } catch (e) { }
     });
     res.json({ success: true, count });
   } catch (err) {
@@ -670,9 +670,9 @@ app.get('/api/report/export-summary-word', (req, res) => {
     </thead>
     <tbody>
       ${report.suppliers.map((s, i) => {
-        const isAutres = (s.label || '').toLowerCase().includes('autre');
-        const rankLabel = isAutres ? '∑' : `#${i + 1}`;
-        return `
+      const isAutres = (s.label || '').toLowerCase().includes('autre');
+      const rankLabel = isAutres ? '∑' : `#${i + 1}`;
+      return `
       <tr style="background-color:${i % 2 === 1 ? '#f8fafc' : '#ffffff'};">
         <td style="text-align:left;">
           <span style="font-size:7.5pt; font-weight:bold; color:#475569; background-color:#f1f5f9; padding:1pt 3pt; border:0.5pt solid #cbd5e1; margin-right:4pt;">${rankLabel}</span>
@@ -682,7 +682,7 @@ app.get('/api/report/export-summary-word', (req, res) => {
         <td nowrap="nowrap" style="text-align:right; font-weight:bold; color:#1e40af;">${sanitizeForWord(formatRatio(s.ratio), true)}</td>
       </tr>
         `;
-      }).join('')}
+    }).join('')}
     </tbody>
     <tfoot>
       <tr style="background-color:#0f172a; color:#ffffff; font-weight:bold; border-top:1.5pt solid #0f172a;">
@@ -710,9 +710,9 @@ app.get('/api/report/export-summary-word', (req, res) => {
     </thead>
     <tbody>
       ${report.markets.map((m, i) => {
-        const isLocal = (m.label || '').toLowerCase().includes('loc');
-        const tag = isLocal ? 'LOCAL' : 'IMPORT';
-        return `
+      const isLocal = (m.label || '').toLowerCase().includes('loc');
+      const tag = isLocal ? 'LOCAL' : 'IMPORT';
+      return `
       <tr style="background-color:${i % 2 === 1 ? '#f8fafc' : '#ffffff'};">
         <td style="text-align:left;">
           <span style="font-size:7.5pt; font-weight:bold; color:${isLocal ? '#047857' : '#1d4ed8'}; background-color:${isLocal ? '#ecfdf5' : '#eff6ff'}; padding:1pt 3pt; border:0.5pt solid ${isLocal ? '#a7f3d0' : '#bfdbfe'}; margin-right:4pt;">${tag}</span>
@@ -722,7 +722,7 @@ app.get('/api/report/export-summary-word', (req, res) => {
         <td nowrap="nowrap" style="text-align:right; font-weight:bold; color:#1e40af;">${sanitizeForWord(formatRatio(m.ratio), true)}</td>
       </tr>
         `;
-      }).join('')}
+    }).join('')}
     </tbody>
     <tfoot>
       <tr style="background-color:#0f172a; color:#ffffff; font-weight:bold; border-top:1.5pt solid #0f172a;">
@@ -845,7 +845,7 @@ app.get('/api/reports/stocks', async (req, res) => {
     }
     if (!stocksList || stocksList.length === 0) {
       const sourceBalance = (balanceKey === '2025') ? reportingEngine.balance25 : reportingEngine.balance1026;
-      stocksList = Array.from(sourceBalance.values()).filter(b => 
+      stocksList = Array.from(sourceBalance.values()).filter(b =>
         b.dz.startsWith('3') || b.boal.startsWith('3000') || b.boal.startsWith('7800') || b.boal.startsWith('7900') || (b.desc || '').includes('STOCK') || (b.desc || '').includes('MATIERE')
       );
     }
@@ -886,7 +886,7 @@ app.get('/api/reports/consommation', async (req, res) => {
       }
     }
     if (!chargesList || chargesList.length === 0) {
-      chargesList = Array.from(reportingEngine.balance1026.values()).filter(b => 
+      chargesList = Array.from(reportingEngine.balance1026.values()).filter(b =>
         b.dz.startsWith('60') || b.boal.startsWith('4000') || b.boal.startsWith('4001') || b.boal.startsWith('4403') || b.boal.startsWith('4404') || b.boal.startsWith('4409') || (b.desc || '').includes('ACHATS CONSOM')
       );
     }
@@ -938,14 +938,14 @@ app.get('/api/reports/fiscalite', async (req, res) => {
       }
     });
     res.json({
-      totals: { 
-        totalDebours: Number(totalDebours.toFixed(2)), 
-        totalTva: Number(totalTva.toFixed(2)), 
-        totalRetenue: Number(totalRetenue.toFixed(2)) 
+      totals: {
+        totalDebours: Number(totalDebours.toFixed(2)),
+        totalTva: Number(totalTva.toFixed(2)),
+        totalRetenue: Number(totalRetenue.toFixed(2))
       },
       deboursBySupplier: Object.entries(deboursBySupplier)
         .map(([supplier, amount]) => ({ supplier, amount: Number(amount.toFixed(2)) }))
-        .sort((a,b) => b.amount - a.amount)
+        .sort((a, b) => b.amount - a.amount)
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -970,9 +970,9 @@ app.post('/api/reports/sync', async (req, res) => {
   try {
     await reportingEngine.loadMasterFiles();
     const dbStats = await sqlDb.getDatabaseStats();
-    res.json({ 
-      success: true, 
-      database: dbStats 
+    res.json({
+      success: true,
+      database: dbStats
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1085,7 +1085,7 @@ app.post('/api/balance/upload', upload.single('balanceFile'), async (req, res) =
     await reportingEngine.loadMasterFiles();
 
     // Clean up temporary upload file
-    try { fs.unlinkSync(req.file.path); } catch (e) {}
+    try { fs.unlinkSync(req.file.path); } catch (e) { }
 
     const periods = await balanceManager.getPeriodsSummary();
 
@@ -1099,7 +1099,7 @@ app.post('/api/balance/upload', upload.single('balanceFile'), async (req, res) =
   } catch (err) {
     console.error('Balance upload error:', err);
     if (req.file && fs.existsSync(req.file.path)) {
-      try { fs.unlinkSync(req.file.path); } catch (e) {}
+      try { fs.unlinkSync(req.file.path); } catch (e) { }
     }
     res.status(500).json({ success: false, error: err.message });
   }
@@ -1171,7 +1171,7 @@ app.get('/api/years', async (req, res) => {
           monthsByYear[yStr].push(mNum);
         }
       });
-    } catch (e) {}
+    } catch (e) { }
 
     // Sort months numerically for each year
     Object.keys(monthsByYear).forEach(k => {
@@ -1185,8 +1185,8 @@ app.get('/api/years', async (req, res) => {
       .sort((a, b) => b - a);
 
     // If years exist with data, prioritize them dynamically
-    const combinedYears = distinctDataYears.length > 0 
-      ? distinctDataYears 
+    const combinedYears = distinctDataYears.length > 0
+      ? distinctDataYears
       : [2026, 2025, 2024];
 
     res.json({
@@ -1241,12 +1241,12 @@ app.post('/api/fbl3n/upload', upload.single('file'), async (req, res) => {
     await reportingEngine.loadMasterFiles();
     // Cleanup uploaded temp file
     if (fs.existsSync(filePath)) {
-      try { fs.unlinkSync(filePath); } catch (e) {}
+      try { fs.unlinkSync(filePath); } catch (e) { }
     }
     res.json({ success: true, ...result });
   } catch (err) {
     if (fs.existsSync(filePath)) {
-      try { fs.unlinkSync(filePath); } catch (e) {}
+      try { fs.unlinkSync(filePath); } catch (e) { }
     }
     console.error('FBL3N Upload error:', err);
     res.status(500).json({ success: false, error: err.message });
@@ -1283,9 +1283,9 @@ app.post('/api/upload/fbl3n', upload.any(), async (req, res) => {
 
     for (const f of uploadedFiles) {
       try {
-        const result = await reconciliationManager.importFBL3NWithDiff(f.path, { 
+        const result = await reconciliationManager.importFBL3NWithDiff(f.path, {
           importMode,
-          sourceFileName: f.originalname 
+          sourceFileName: f.originalname
         });
         batchResults.push({
           fileName: f.originalname,
@@ -1306,7 +1306,7 @@ app.post('/api/upload/fbl3n', upload.any(), async (req, res) => {
         });
       } finally {
         if (fs.existsSync(f.path)) {
-          try { fs.unlinkSync(f.path); } catch (e) {}
+          try { fs.unlinkSync(f.path); } catch (e) { }
         }
       }
     }
@@ -1361,7 +1361,7 @@ app.post('/api/upload/balance', upload.any(), async (req, res) => {
         });
       } finally {
         if (fs.existsSync(f.path)) {
-          try { fs.unlinkSync(f.path); } catch (e) {}
+          try { fs.unlinkSync(f.path); } catch (e) { }
         }
       }
     }

@@ -357,8 +357,8 @@ class ReconciliationManager {
     const logEntries = diffsByPeriod.map(d => {
       const msg = d.hasExisting
         ? (d.isIdentical
-            ? `Période ${d.periodLabel} réimportée : Données strictement identiques (${d.newCount} lignes).`
-            : `Période ${d.periodLabel} remplacée : ${d.diffCount >= 0 ? '+' : ''}${d.diffCount} écritures, écart net de ${d.diffSum.toLocaleString('fr-FR')} DZD.`)
+          ? `Période ${d.periodLabel} réimportée : Données strictement identiques (${d.newCount} lignes).`
+          : `Période ${d.periodLabel} remplacée : ${d.diffCount >= 0 ? '+' : ''}${d.diffCount} écritures, écart net de ${d.diffSum.toLocaleString('fr-FR')} DZD.`)
         : `Période ${d.periodLabel} initialisée : ${d.newCount} écritures enregistrées.`;
 
       return this.logDiff({
@@ -468,8 +468,8 @@ class ReconciliationManager {
     // 3. Log diff notification
     const msg = hasExisting
       ? (isIdentical
-          ? `Balance période ${periodKey} réimportée : Données strictement identiques (${newRecords.length} comptes).`
-          : `Balance période ${periodKey} mise à jour : ${modifiedAccounts} comptes modifiés, ${addedAccounts} nouveaux comptes. Écart global solde : ${(newTotalSolde - oldTotalSolde).toLocaleString('fr-FR')} DZD.`)
+        ? `Balance période ${periodKey} réimportée : Données strictement identiques (${newRecords.length} comptes).`
+        : `Balance période ${periodKey} mise à jour : ${modifiedAccounts} comptes modifiés, ${addedAccounts} nouveaux comptes. Écart global solde : ${(newTotalSolde - oldTotalSolde).toLocaleString('fr-FR')} DZD.`)
       : `Balance période ${periodKey} initialisée avec ${newRecords.length} comptes.`;
 
     const logEntry = this.logDiff({

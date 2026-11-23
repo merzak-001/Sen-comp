@@ -2211,7 +2211,7 @@ async function loadTCRPage(forceRefresh = false) {
 function renderTCRTable(data) {
   if (!data) return;
 
-  const hasN1 = data.yearN_1 !== null && data.yearN_1 !== undefined;
+  const hasN1 = (data.hasN1 !== undefined) ? Boolean(data.hasN1) : (data.yearN_1 !== null && data.yearN_1 !== undefined);
   const yearN = data.yearN || AppState.selectedYear || '2026';
   const yearN1 = data.yearN_1;
   const activeSource = data.source || AppState.tcrSource || 'balance';
@@ -2614,7 +2614,7 @@ async function loadBilanPage(forceReload = false) {
 function renderBilanTables(data) {
   if (!data) return;
 
-  const hasN1 = data.yearN_1 !== null && data.yearN_1 !== undefined;
+  const hasN1 = (data.hasN1 !== undefined) ? Boolean(data.hasN1) : (data.yearN_1 !== null && data.yearN_1 !== undefined);
   const yearN = data.yearN || AppState.selectedYear || '2026';
   const yearN1 = data.yearN_1;
   const activeSource = data.source || AppState.bilanSource || 'balance';

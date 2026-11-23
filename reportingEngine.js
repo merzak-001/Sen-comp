@@ -730,13 +730,17 @@ class ReportingEngine {
   async getTCRReport(targetYear = '2026', targetMonth = 'ALL', source = 'balance') {
     const yearNum = parseInt(targetYear, 10) || 2026;
     const yearN = yearNum;
-    const is2025 = yearNum === 2025;
-    const is2024 = yearNum === 2024;
-    const yearN_1 = is2024 ? null : yearNum - 1;
+    const candidateYearN_1 = yearNum - 1;
 
     const balN = await this.getAccountsForReport(yearN, targetMonth, source);
-    const balN1 = yearN_1 ? await this.getAccountsForReport(yearN_1, targetMonth, source) : new Map();
-    const hasData = (balN.size > 0);
+    const candBalN1 = candidateYearN_1 ? await this.getAccountsForReport(candidateYearN_1, targetMonth, source) : new Map();
+
+    const hasData = (balN.size > 0 && Array.from(balN.values()).some(b => Math.abs(b.solde) > 0.001));
+    const hasDataN1 = (candBalN1.size > 0 && Array.from(candBalN1.values()).some(b => Math.abs(b.solde) > 0.001));
+
+    const hasN1 = Boolean(hasDataN1);
+    const yearN_1 = hasN1 ? candidateYearN_1 : null;
+    const balN1 = hasN1 ? candBalN1 : new Map();
 
     // Official hardcoded numbers completely removed for dynamic database reporting
 
@@ -831,9 +835,9 @@ class ReportingEngine {
 
         // Determine valN and valN_1 for this account
         let accValN = val26;
-        let accValN_1 = val25;
+        let accValN_1 = hasN1 ? val25 : null;
 
-        if (Math.abs(accValN) > 0.01 || Math.abs(accValN_1) > 0.01) {
+        if (Math.abs(accValN) > 0.01 || (hasN1 && accValN_1 !== null && Math.abs(accValN_1) > 0.01)) {
           sections[targetKey].accounts.push({
             boal,
             dz,
@@ -842,74 +846,74 @@ class ReportingEngine {
             valN_1: accValN_1,
             val26: accValN,
             val25: accValN_1,
-            diff: accValN - accValN_1
+            diff: (hasN1 && accValN_1 !== null) ? (accValN - accValN_1) : null
           });
         }
       }
     });
 
     const getSumN = (key) => (sections[key]?.accounts || []).reduce((acc, a) => acc + (a.valN || 0), 0);
-    const getSumN1 = (key) => (sections[key]?.accounts || []).reduce((acc, a) => acc + (a.valN_1 || 0), 0);
+    const getSumN1 = (key) => hasN1 ? (sections[key]?.accounts || []).reduce((acc, a) => acc + (a.valN_1 || 0), 0) : null;
 
     const s70_N = getSumN('70'); const s70_N1 = getSumN1('70');
     const s72_N = getSumN('72'); const s72_N1 = getSumN1('72');
     const s73_N = getSumN('73'); const s73_N1 = getSumN1('73');
     const s74_N = getSumN('74'); const s74_N1 = getSumN1('74');
     const prod_N = s70_N + s72_N + s73_N + s74_N;
-    const prod_N1 = s70_N1 + s72_N1 + s73_N1 + s74_N1;
+    const prod_N1 = hasN1 ? (s70_N1 + s72_N1 + s73_N1 + s74_N1) : null;
 
     const s60_N = getSumN('60'); const s60_N1 = getSumN1('60');
     const s61_62_N = getSumN('61_62'); const s61_62_N1 = getSumN1('61_62');
     const cons_N = s60_N + s61_62_N;
-    const cons_N1 = s60_N1 + s61_62_N1;
+    const cons_N1 = hasN1 ? (s60_N1 + s61_62_N1) : null;
 
     const va_N = prod_N - cons_N;
-    const va_N1 = prod_N1 - cons_N1;
+    const va_N1 = hasN1 ? (prod_N1 - cons_N1) : null;
 
     const s63_N = getSumN('63'); const s63_N1 = getSumN1('63');
     const s64_N = getSumN('64'); const s64_N1 = getSumN1('64');
     const ebe_N = va_N - s63_N - s64_N;
-    const ebe_N1 = va_N1 - s63_N1 - s64_N1;
+    const ebe_N1 = hasN1 ? (va_N1 - s63_N1 - s64_N1) : null;
 
     const s75_N = getSumN('75'); const s75_N1 = getSumN1('75');
     const s65_N = getSumN('65'); const s65_N1 = getSumN1('65');
     const s78_N = getSumN('78'); const s78_N1 = getSumN1('78');
     const s68_N = getSumN('68'); const s68_N1 = getSumN1('68');
     const resOp_N = ebe_N + s75_N - s65_N + s78_N - s68_N;
-    const resOp_N1 = ebe_N1 + s75_N1 - s65_N1 + s78_N1 - s68_N1;
+    const resOp_N1 = hasN1 ? (ebe_N1 + s75_N1 - s65_N1 + s78_N1 - s68_N1) : null;
 
     const s76_N = getSumN('76'); const s76_N1 = getSumN1('76');
     const s66_N = getSumN('66'); const s66_N1 = getSumN1('66');
     const resFin_N = s76_N - s66_N;
-    const resFin_N1 = s76_N1 - s66_N1;
+    const resFin_N1 = hasN1 ? (s76_N1 - s66_N1) : null;
 
     const rcai_N = resOp_N + resFin_N;
-    const rcai_N1 = resOp_N1 + resFin_N1;
+    const rcai_N1 = hasN1 ? (resOp_N1 + resFin_N1) : null;
 
     const s69_N = getSumN('69'); const s69_N1 = getSumN1('69');
     const resNet_N = rcai_N - s69_N;
-    const resNet_N1 = rcai_N1 - s69_N1;
+    const resNet_N1 = hasN1 ? (rcai_N1 - s69_N1) : null;
 
     // Helper to construct TCR row
     const buildRow = (ref, label, nN, nN1, type = 'item', accounts = []) => {
-      const hasN1 = nN1 !== null && nN1 !== undefined;
-      const diff = hasN1 ? nN - nN1 : null;
-      const pct = (hasN1 && Math.abs(nN1) > 0) ? (diff / Math.abs(nN1)) * 100 : null;
-      const ratioCAN = Math.abs(s70_N) > 0 ? (nN / s70_N) * 100 : 0;
-      const ratioCAN1 = (hasN1 && s70_N1 && Math.abs(s70_N1) > 0) ? (nN1 / s70_N1) * 100 : null;
+      const rowHasN1 = hasN1 && nN1 !== null && nN1 !== undefined;
+      const diff = rowHasN1 ? (nN - nN1) : null;
+      const pct = (rowHasN1 && Math.abs(nN1) > 0) ? (diff / Math.abs(nN1)) * 100 : null;
+      const ratioCAN = (s70_N && Math.abs(s70_N) > 0) ? (nN / s70_N) * 100 : 0;
+      const ratioCAN1 = (rowHasN1 && s70_N1 && Math.abs(s70_N1) > 0) ? (nN1 / s70_N1) * 100 : null;
       return {
         ref,
         label,
         type,
         valN: nN,
-        valN_1: nN1,
+        valN_1: rowHasN1 ? nN1 : null,
         diff,
         pct,
         ratioCAN,
         ratioCAN1,
         // Compatibility aliases:
         val26: nN,
-        val25: nN1,
+        val25: rowHasN1 ? nN1 : null,
         ratioCA26: ratioCAN,
         ratioCA25: ratioCAN1,
         accountCount: accounts.length,
@@ -951,40 +955,47 @@ class ReportingEngine {
     ];
 
 
+    const monthSuffix = (targetMonth && targetMonth !== 'ALL') ? ` (Mois ${targetMonth})` : '';
+    const periodLabelN = `Exercice ${yearN}${monthSuffix}`;
+    const periodLabelN1 = hasN1 ? `Exercice ${yearN_1}${monthSuffix}` : null;
+
     return {
       company: 'SENSUS ALGERIE SPA',
       title: 'Tableau des Comptes de Résultats (TCR — SCF Algérie)',
       hasData,
+      hasN1,
+      hasComparison: hasN1,
       sourceUsed: balN.effectiveSource || source,
       source: balN.effectiveSource || source,
       yearN,
-      yearN_1,
-      periodN: is2025 ? 'Exercice 2025 (Bilan Fiscal Déposé — Accusé Impôts)' : is2024 ? 'Exercice 2024 (Liasse Fiscale)' : 'Exercice 2026 (Cumul Octobre)',
-      periodN1: is2025 ? 'Exercice 2024 (Liasse Fiscale Colonne N-1)' : is2024 ? null : 'Exercice 2025 (Bilan Fiscal Déposé — Accusé Impôts)',
+      yearN_1: hasN1 ? yearN_1 : null,
+      periodN: periodLabelN,
+      periodN1: periodLabelN1,
       kpis: {
         yearN,
-        yearN_1,
+        yearN_1: hasN1 ? yearN_1 : null,
+        hasN1,
         caN: s70_N,
-        caN_1: s70_N1,
-        caDiffPct: (s70_N1 !== null && s70_N1 !== undefined) ? ((s70_N - s70_N1) / s70_N1) * 100 : null,
+        caN_1: hasN1 ? s70_N1 : null,
+        caDiffPct: (hasN1 && s70_N1 !== null && s70_N1 !== undefined && Math.abs(s70_N1) > 0) ? ((s70_N - s70_N1) / Math.abs(s70_N1)) * 100 : null,
         vaN: va_N,
-        vaN_1: va_N1,
+        vaN_1: hasN1 ? va_N1 : null,
         tauxVAN: prod_N ? (va_N / prod_N) * 100 : 0,
         ebeN: ebe_N,
-        ebeN_1: ebe_N1,
+        ebeN_1: hasN1 ? ebe_N1 : null,
         margeEBEN: s70_N ? (ebe_N / s70_N) * 100 : 0,
         resNetN: resNet_N,
-        resNetN_1: resNet_N1,
+        resNetN_1: hasN1 ? resNet_N1 : null,
         margeNetteN: s70_N ? (resNet_N / s70_N) * 100 : 0,
         // Compatibility aliases:
         ca26: s70_N,
-        ca25: s70_N1,
+        ca25: hasN1 ? s70_N1 : null,
         va26: va_N,
-        va25: va_N1,
+        va25: hasN1 ? va_N1 : null,
         ebe26: ebe_N,
-        ebe25: ebe_N1,
+        ebe25: hasN1 ? ebe_N1 : null,
         resNet26: resNet_N,
-        resNet25: resNet_N1,
+        resNet25: hasN1 ? resNet_N1 : null,
         tauxVA26: prod_N ? (va_N / prod_N) * 100 : 0,
         margeEBE26: s70_N ? (ebe_N / s70_N) * 100 : 0,
         margeNette26: s70_N ? (resNet_N / s70_N) * 100 : 0
@@ -1002,32 +1013,35 @@ class ReportingEngine {
   async getBilanReport(targetYear = '2026', targetMonth = 'ALL', source = 'balance') {
     const yearNum = parseInt(targetYear, 10) || 2026;
     const yearN = yearNum;
-    const is2025 = yearNum === 2025;
-    const is2024 = yearNum === 2024;
-    const hasN1 = !is2024;
-    const yearN_1 = hasN1 ? yearNum - 1 : null;
+    const candidateYearN_1 = yearNum - 1;
 
     const balN = await this.getAccountsForReport(yearN, targetMonth, source);
-    const balN1 = yearN_1 ? await this.getAccountsForReport(yearN_1, targetMonth, source) : new Map();
-    const hasData = (balN.size > 0);
+    const candBalN1 = candidateYearN_1 ? await this.getAccountsForReport(candidateYearN_1, targetMonth, source) : new Map();
+
+    const hasData = (balN.size > 0 && Array.from(balN.values()).some(b => Math.abs(b.solde) > 0.001));
+    const hasDataN1 = (candBalN1.size > 0 && Array.from(candBalN1.values()).some(b => Math.abs(b.solde) > 0.001));
+
+    const hasN1 = Boolean(hasDataN1);
+    const yearN_1 = hasN1 ? candidateYearN_1 : null;
+    const balN1 = hasN1 ? candBalN1 : new Map();
 
     const tcr = await this.getTCRReport(targetYear, targetMonth, source);
     const resNetN = tcr.kpis.resNetN || 0;
-    const resNetN_1 = tcr.kpis.resNetN_1 || 0;
+    const resNetN_1 = hasN1 ? (tcr.kpis.resNetN_1 || 0) : null;
 
     // Gather accounts across database balances for requested years
-    const allBoalKeys = new Set([...balN.keys(), ...balN1.keys()]);
+    const allBoalKeys = hasN1 ? new Set([...balN.keys(), ...balN1.keys()]) : new Set([...balN.keys()]);
     const accountList = [];
 
     allBoalKeys.forEach(boal => {
       const bN = balN.get(boal);
-      const bN1 = balN1.get(boal);
+      const bN1 = hasN1 ? balN1.get(boal) : null;
       const chart = this.chartOfAccounts.get(boal) || { dz: '', desc: '' };
       const dz = chart.dz || bN?.dz || bN1?.dz || '';
       const desc = chart.desc || bN?.desc || bN1?.desc || '';
 
       const soldeN = bN ? bN.solde : 0;
-      const soldeN1 = bN1 ? bN1.solde : 0;
+      const soldeN1 = (hasN1 && bN1) ? bN1.solde : null;
 
       accountList.push({ boal, dz, desc, soldeN, soldeN1 });
     });
@@ -1036,19 +1050,19 @@ class ReportingEngine {
       const matched = accountList.filter(filterFn);
       const accounts = matched.map(a => {
         let valN = a.soldeN;
-        let valN1 = a.soldeN1;
+        let valN1 = hasN1 ? a.soldeN1 : null;
         if (isAmort) {
           valN = valN < 0 ? -valN : valN;
-          valN1 = valN1 < 0 ? -valN1 : valN1;
+          if (valN1 !== null) valN1 = valN1 < 0 ? -valN1 : valN1;
         } else if (isPassif) {
           valN = valN < 0 ? -valN : valN;
-          valN1 = valN1 < 0 ? -valN1 : valN1;
+          if (valN1 !== null) valN1 = valN1 < 0 ? -valN1 : valN1;
         }
         return { boal: a.boal, dz: a.dz, desc: a.desc, valN, valN_1: valN1, val26: valN, val25: valN1 };
-      }).filter(a => Math.abs(a.valN) > 0.001 || Math.abs(a.valN_1) > 0.001);
+      }).filter(a => Math.abs(a.valN) > 0.001 || (hasN1 && a.valN_1 !== null && Math.abs(a.valN_1) > 0.001));
 
       const brutN = accounts.reduce((s, a) => s + a.valN, 0);
-      const brutN1 = accounts.reduce((s, a) => s + a.valN_1, 0);
+      const brutN1 = hasN1 ? accounts.reduce((s, a) => s + (a.valN_1 || 0), 0) : null;
 
       return { code, label, brutN, brutN1, brut26: brutN, brut25: brutN1, accounts };
     };
@@ -1221,19 +1235,24 @@ class ReportingEngine {
     const bfrN = (totalCourant.netN - rowTreso.netN) - totalPassifCourant.montantN;
     const bfrN1 = hasN1 ? ((totalCourant.netN_1 - rowTreso.netN_1) - totalPassifCourant.montantN_1) : null;
 
+    const monthSuffix = (targetMonth && targetMonth !== 'ALL') ? ` (Mois ${targetMonth})` : '';
+
     return {
-      hasData: (balN.size > 0 || balN1.size > 0),
+      hasData,
+      hasN1,
+      hasComparison: hasN1,
       sourceUsed: balN.effectiveSource || source,
       source: balN.effectiveSource || source,
       company: 'SENSUS ALGERIE SPA',
       title: 'Bilan Comptable (Actif & Passif — SCF Algérie)',
       yearN,
-      yearN_1,
-      periodN: `Exercice ${yearN}`,
-      periodN1: hasN1 ? `Exercice ${yearN_1}` : null,
+      yearN_1: hasN1 ? yearN_1 : null,
+      periodN: `Exercice ${yearN}${monthSuffix}`,
+      periodN1: hasN1 ? `Exercice ${yearN_1}${monthSuffix}` : null,
       kpis: {
         yearN,
-        yearN_1,
+        yearN_1: hasN1 ? yearN_1 : null,
+        hasN1,
         totalActifNetN: totalGeneralActif.netN,
         totalActifNetN1: totalGeneralActif.netN_1,
         totalPassifN: totalGeneralPassif.montantN,
