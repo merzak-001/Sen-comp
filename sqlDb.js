@@ -1,4 +1,4 @@
-const msnodesql = require('msnodesqlv8');
+const sql = require('mssql');
 const path = require('path');
 const fs = require('fs');
 const XLSX = require('xlsx');
@@ -8,25 +8,60 @@ const dbName = process.env.DB_NAME || process.env.SQL_SERVER_DATABASE || 'Sensus
 const dbUser = process.env.DB_USER || 'sa';
 const dbPassword = process.env.DB_PASSWORD || '0000';
 
-let CONNECTION_STRING = process.env.DB_CONNECTION_STRING;
-if (!CONNECTION_STRING) {
-  CONNECTION_STRING = `server=${dbServer};Database=${dbName};UID=${dbUser};PWD=${dbPassword};Driver={ODBC Driver 17 for SQL Server};TrustServerCertificate=Yes;`;
-}
+const dbConfig = {
+  server: dbServer,
+  database: dbName,
+  user: dbUser,
+  password: dbPassword,
+  options: {
+    encrypt: false,
+    trustServerCertificate: true,
+    enableArithAbort: true
+  },
+  connectionTimeout: 15000,
+  requestTimeout: 60000,
+  pool: {
+    max: 10,
+    min: 0,
+    idleTimeoutMillis: 30000
+  }
+};
+
 const OS_APPRO_DIR = 'C:/Users/msai/OneDrive - Sensus Germany GmbH & Co. KG/Documents/OS-appro';
 
 class SqlDatabase {
   constructor() {
-    this.connStr = CONNECTION_STRING;
     this.isConnected = false;
+    this.pool = null;
+    this.poolPromise = null;
   }
 
-  query(sqlText, params = []) {
-    return new Promise((resolve, reject) => {
-      msnodesql.query(this.connStr, sqlText, params, (err, rows) => {
-        if (err) return reject(err);
-        resolve(rows || []);
+  async getPool() {
+    if (this.pool && this.pool.connected) return this.pool;
+    if (this.poolPromise) return this.poolPromise;
+
+    this.poolPromise = new sql.ConnectionPool(dbConfig)
+      .connect()
+      .then(p => {
+        this.pool = p;
+        this.isConnected = true;
+        this.poolPromise = null;
+        return p;
+      })
+      .catch(err => {
+        this.pool = null;
+        this.poolPromise = null;
+        this.isConnected = false;
+        throw err;
       });
-    });
+
+    return this.poolPromise;
+  }
+
+  async query(sqlText, params = []) {
+    const pool = await this.getPool();
+    const result = await pool.request().query(sqlText);
+    return result.recordset || [];
   }
 
   async testConnection() {
