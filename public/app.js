@@ -2183,7 +2183,11 @@ async function loadTCRPage(forceRefresh = false) {
     if (json.success === false) throw new Error(json.error || 'Erreur API');
 
     AppState.tcrData = json.tcr || json;
-    AppState.tcrData.source = source;
+    const effectiveSource = (json.tcr && (json.tcr.sourceUsed || json.tcr.source)) || source;
+    AppState.tcrData.source = effectiveSource;
+    if (json.tcr && json.tcr.sourceUsed) {
+      AppState.tcrSource = json.tcr.sourceUsed;
+    }
     renderTCRTable(AppState.tcrData);
   } catch (err) {
     console.error('Error loading TCR:', err);
@@ -2577,7 +2581,11 @@ async function loadBilanPage(forceReload = false) {
     }
 
     AppState.bilanData = json.bilan;
-    AppState.bilanData.source = source;
+    const effectiveSource = (json.bilan && (json.bilan.sourceUsed || json.bilan.source)) || source;
+    AppState.bilanData.source = effectiveSource;
+    if (json.bilan && json.bilan.sourceUsed) {
+      AppState.bilanSource = json.bilan.sourceUsed;
+    }
     renderBilanTables(AppState.bilanData);
   } catch (err) {
     console.error('Error loading Bilan:', err);

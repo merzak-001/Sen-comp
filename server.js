@@ -987,7 +987,7 @@ app.get('/api/tcr', async (req, res) => {
     const source = req.query.source || 'balance';
     const tcr = await reportingEngine.getTCRReport(year, month, source);
     tcr.month = month;
-    tcr.source = source;
+    tcr.source = tcr.sourceUsed || source;
     res.json({
       success: true,
       tcr
@@ -1006,7 +1006,7 @@ app.get('/api/bilan', async (req, res) => {
     const source = req.query.source || 'balance';
     const bilan = await reportingEngine.getBilanReport(year, month, source);
     bilan.month = month;
-    bilan.source = source;
+    bilan.source = bilan.sourceUsed || source;
     res.json({
       success: true,
       bilan
@@ -1236,8 +1236,9 @@ app.post('/api/fbl3n/upload', upload.single('file'), async (req, res) => {
       clearExisting: importMode === 'all',
       sourceFileName: req.file.originalname
     });
-    // Invalidate TFT cache so newly imported GL data is dynamically reflected
+    // Invalidate TFT cache and reload master files so newly imported GL data is dynamically reflected
     reportingEngine.invalidateTFTCache();
+    await reportingEngine.loadMasterFiles();
     // Cleanup uploaded temp file
     if (fs.existsSync(filePath)) {
       try { fs.unlinkSync(filePath); } catch (e) {}
@@ -1311,6 +1312,7 @@ app.post('/api/upload/fbl3n', upload.any(), async (req, res) => {
     }
 
     reportingEngine.invalidateTFTCache();
+    await reportingEngine.loadMasterFiles();
     res.json({
       success: true,
       filesCount: uploadedFiles.length,

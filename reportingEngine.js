@@ -496,22 +496,63 @@ class ReportingEngine {
     const monthNum = (month && month !== 'ALL') ? parseInt(month, 10) : null;
     const accountMap = new Map();
 
-    if (source === 'gl') {
+    // 1. Ensure Chart of Accounts is loaded from SQL Server
+    if (!this.chartOfAccounts || this.chartOfAccounts.size === 0) {
+      try {
+        const chartRows = await sqlDb.query('SELECT boal_account, scf_account, description FROM ChartOfAccounts');
+        if (Array.isArray(chartRows) && chartRows.length > 0) {
+          if (!this.chartOfAccounts) this.chartOfAccounts = new Map();
+          chartRows.forEach(r => {
+            if (r.boal_account) {
+              this.chartOfAccounts.set(String(r.boal_account).trim(), {
+                dz: String(r.scf_account || '').trim(),
+                desc: String(r.description || '').trim()
+              });
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('[ReportingEngine] Error loading ChartOfAccounts on demand:', e.message);
+      }
+    }
+
+    // 2. Discover available data sources in SQL Server for this year
+    let glRowsCount = 0;
+    let balRowsCount = 0;
+    try {
+      const glCheck = await sqlDb.query(`SELECT COUNT(*) AS cnt FROM FBL3NLineItems WHERE fiscal_year = ${yearNum} AND doc_number <> ''`);
+      glRowsCount = Number(glCheck[0]?.cnt) || 0;
+      const balCheck = await sqlDb.query(`SELECT COUNT(*) AS cnt FROM GeneralLedgerBalances WHERE period_key LIKE '%${yearNum}' OR period_key = '${yearNum}'`);
+      balRowsCount = Number(balCheck[0]?.cnt) || 0;
+    } catch (e) {}
+
+    // Auto-fallback: if requested source has no data but the other does, use the one with data
+    let effectiveSource = source;
+    if (source === 'balance' && balRowsCount === 0 && glRowsCount > 0) {
+      effectiveSource = 'gl';
+    } else if (source === 'gl' && glRowsCount === 0 && balRowsCount > 0) {
+      effectiveSource = 'balance';
+    }
+
+    if (effectiveSource === 'gl') {
       try {
         let sql = `
           SELECT 
             f.account AS boal,
+            ISNULL(c.scf_account, '') AS dz,
+            ISNULL(c.description, '') AS [desc],
             COUNT(*) AS gl_count,
             ISNULL(SUM(f.amount_local), 0) AS solde,
             ISNULL(SUM(CASE WHEN f.amount_local > 0 THEN f.amount_local ELSE 0 END), 0) AS debit,
             ISNULL(SUM(CASE WHEN f.amount_local < 0 THEN ABS(f.amount_local) ELSE 0 END), 0) AS credit
           FROM FBL3NLineItems f
-          WHERE f.fiscal_year = ${yearNum}
+          LEFT JOIN ChartOfAccounts c ON f.account = c.boal_account
+          WHERE f.fiscal_year = ${yearNum} AND f.doc_number <> ''
         `;
         if (monthNum !== null && !isNaN(monthNum)) {
           sql += ` AND f.fiscal_month <= ${monthNum}`;
         }
-        sql += ` GROUP BY f.account`;
+        sql += ` GROUP BY f.account, c.scf_account, c.description`;
 
         const rows = await sqlDb.query(sql);
         const glMap = new Map();
@@ -522,16 +563,32 @@ class ReportingEngine {
           });
         }
 
-        // Get Opening Balance (Report de solde / A-nouveau) from Balance for this year
-        const balForYear = this.getBalanceForYear(yearNum) || new Map();
+        // Get Opening Balances from SQL Server GeneralLedgerBalances if available
+        let openBalRows = [];
+        try {
+          openBalRows = await sqlDb.query(`
+            SELECT b.boal_account, b.report_initial, ISNULL(b.scf_account, c.scf_account) AS scf_account, ISNULL(b.account_desc, c.description) AS account_desc
+            FROM GeneralLedgerBalances b
+            LEFT JOIN ChartOfAccounts c ON b.boal_account = c.boal_account
+            WHERE b.period_key = '01${yearNum}' OR b.period_key LIKE '%${yearNum}'
+          `);
+        } catch (e) {}
 
-        // 1. Add all accounts from Balance that have opening report
-        balForYear.forEach((balItem, boal) => {
-          const chart = this.chartOfAccounts.get(boal) || { dz: '', desc: '' };
-          const dz = chart.dz || balItem.dz || '';
+        const openMap = new Map();
+        openBalRows.forEach(r => {
+          const boal = String(r.boal_account || '').trim();
+          if (boal && !openMap.has(boal)) {
+            openMap.set(boal, r);
+          }
+        });
+
+        // 1. Add all accounts from Opening Balances for balance sheet accounts (classes 1-5)
+        openMap.forEach((balItem, boal) => {
+          const chart = this.chartOfAccounts?.get(boal) || { dz: '', desc: '' };
+          const dz = chart.dz || balItem.scf_account || '';
           const firstDigit = dz.charAt(0);
           const isBalanceSheet = ['1', '2', '3', '4', '5'].includes(firstDigit);
-          const report = isBalanceSheet ? (Number(balItem.report) || 0) : 0;
+          const report = isBalanceSheet ? (Number(balItem.report_initial) || 0) : 0;
 
           const glData = glMap.get(boal);
           const glDebit = glData ? Number(glData.debit) || 0 : 0;
@@ -542,7 +599,7 @@ class ReportingEngine {
           accountMap.set(boal, {
             boal,
             dz,
-            desc: chart.desc || balItem.desc || '',
+            desc: chart.desc || balItem.account_desc || glData?.desc || '',
             report,
             debit: glDebit,
             credit: glCredit,
@@ -552,14 +609,14 @@ class ReportingEngine {
           });
         });
 
-        // 2. Add any GL accounts that were not in the balance
+        // 2. Add all GL accounts
         glMap.forEach((glData, boal) => {
           if (!accountMap.has(boal)) {
-            const chart = this.chartOfAccounts.get(boal) || { dz: '', desc: '' };
+            const chart = this.chartOfAccounts?.get(boal) || { dz: '', desc: '' };
             accountMap.set(boal, {
               boal,
-              dz: chart.dz || '',
-              desc: chart.desc || '',
+              dz: chart.dz || glData.dz || '',
+              desc: chart.desc || glData.desc || '',
               report: 0,
               debit: Number(glData.debit) || 0,
               credit: Number(glData.credit) || 0,
@@ -573,37 +630,87 @@ class ReportingEngine {
         console.warn(`[ReportingEngine] Failed to load GL for ${yearNum}:`, sqlErr.message);
       }
     } else {
-      // Source: Balance
-      let pKey = null;
-      if (monthNum !== null && !isNaN(monthNum)) {
-        const mm = String(monthNum).padStart(2, '0');
-        const candidate = `${mm}${yearNum}`;
-        if (this.balancesByPeriod && this.balancesByPeriod.has(candidate)) {
-          pKey = candidate;
+      // Source: Balance - Query SQL Server GeneralLedgerBalances directly
+      try {
+        let balSql = `
+          SELECT 
+            b.boal_account AS boal,
+            ISNULL(b.scf_account, c.scf_account) AS dz,
+            ISNULL(b.account_desc, c.description) AS [desc],
+            b.report_initial AS report,
+            b.debit AS debit,
+            b.credit AS credit,
+            b.solde AS solde,
+            b.period_key
+          FROM GeneralLedgerBalances b
+          LEFT JOIN ChartOfAccounts c ON b.boal_account = c.boal_account
+          WHERE (b.period_key LIKE '%${yearNum}' OR b.period_key = '${yearNum}')
+        `;
+        if (monthNum !== null && !isNaN(monthNum)) {
+          const mm = String(monthNum).padStart(2, '0');
+          balSql += ` AND (b.period_key = '${mm}${yearNum}')`;
         }
+        balSql += ` ORDER BY b.period_key DESC`;
+
+        const dbBalances = await sqlDb.query(balSql);
+        if (Array.isArray(dbBalances) && dbBalances.length > 0) {
+          // If multiple periods match, keep the latest period for each account
+          dbBalances.forEach(item => {
+            const boal = String(item.boal || '').trim();
+            if (boal && !accountMap.has(boal)) {
+              const chart = this.chartOfAccounts?.get(boal) || { dz: '', desc: '' };
+              accountMap.set(boal, {
+                boal,
+                dz: chart.dz || item.dz || '',
+                desc: chart.desc || item.desc || '',
+                report: Number(item.report) || 0,
+                debit: Number(item.debit) || 0,
+                credit: Number(item.credit) || 0,
+                solde: Number(item.solde) || 0,
+                periodKey: item.period_key,
+                source: 'BALANCE'
+              });
+            }
+          });
+        }
+      } catch (balErr) {
+        console.warn(`[ReportingEngine] Failed to query SQL Server balances for ${yearNum}:`, balErr.message);
       }
 
-      let balMap = (pKey && this.balancesByPeriod && this.balancesByPeriod.has(pKey)) 
-        ? this.balancesByPeriod.get(pKey) 
-        : this.getBalanceForYear(yearNum);
+      // Fallback to in-memory balances if SQL query returned empty
+      if (accountMap.size === 0) {
+        let pKey = null;
+        if (monthNum !== null && !isNaN(monthNum)) {
+          const mm = String(monthNum).padStart(2, '0');
+          const candidate = `${mm}${yearNum}`;
+          if (this.balancesByPeriod && this.balancesByPeriod.has(candidate)) {
+            pKey = candidate;
+          }
+        }
 
-      if (balMap && balMap.size > 0) {
-        balMap.forEach((item, boal) => {
-          const chart = this.chartOfAccounts.get(boal) || { dz: '', desc: '' };
-          accountMap.set(boal, {
-            boal,
-            dz: chart.dz || item.dz || '',
-            desc: chart.desc || item.desc || '',
-            report: Number(item.report) || 0,
-            debit: Number(item.debit) || 0,
-            credit: Number(item.credit) || 0,
-            solde: Number(item.solde) || 0,
-            source: 'BALANCE'
+        let balMap = (pKey && this.balancesByPeriod && this.balancesByPeriod.has(pKey)) 
+          ? this.balancesByPeriod.get(pKey) 
+          : this.getBalanceForYear(yearNum);
+
+        if (balMap && balMap.size > 0) {
+          balMap.forEach((item, boal) => {
+            const chart = this.chartOfAccounts?.get(boal) || { dz: '', desc: '' };
+            accountMap.set(boal, {
+              boal,
+              dz: chart.dz || item.dz || '',
+              desc: chart.desc || item.desc || '',
+              report: Number(item.report) || 0,
+              debit: Number(item.debit) || 0,
+              credit: Number(item.credit) || 0,
+              solde: Number(item.solde) || 0,
+              source: 'BALANCE'
+            });
           });
-        });
+        }
       }
     }
 
+    accountMap.effectiveSource = effectiveSource;
     return accountMap;
   }
 
@@ -835,6 +942,8 @@ class ReportingEngine {
       company: 'SENSUS ALGERIE SPA',
       title: 'Tableau des Comptes de Résultats (TCR — SCF Algérie)',
       hasData,
+      sourceUsed: balN.effectiveSource || source,
+      source: balN.effectiveSource || source,
       yearN,
       yearN_1,
       periodN: is2025 ? 'Exercice 2025 (Bilan Fiscal Déposé — Accusé Impôts)' : is2024 ? 'Exercice 2024 (Liasse Fiscale)' : 'Exercice 2026 (Cumul Octobre)',
@@ -1101,6 +1210,8 @@ class ReportingEngine {
 
     return {
       hasData: (balN.size > 0 || balN1.size > 0),
+      sourceUsed: balN.effectiveSource || source,
+      source: balN.effectiveSource || source,
       company: 'SENSUS ALGERIE SPA',
       title: 'Bilan Comptable (Actif & Passif — SCF Algérie)',
       yearN,
