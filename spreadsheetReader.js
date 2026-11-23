@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 const readline = require('readline');
 const XLSX = require('xlsx');
 
@@ -6,35 +7,41 @@ const XLSX = require('xlsx');
  * Universal spreadsheet reader for SAP exports:
  * - Genuine XLSX (PK zip format)
  * - Genuine XLS (BIFF8 / OLE2 compound document)
+ * - UTF-16LE / Tab-separated SAP text exports (e.g. balance 25.xls)
  * - SAP ALV MHTML exports (multipart/related with HTML table, saved as .xls or .xlsx)
  * - SAP ALV HTML exports (HTML table with x:str / x:num tags)
  */
 class SpreadsheetReader {
   /**
-   * Checks if file starts with ZIP (PK..) or OLE2 (\xD0\xCF..) signature
+   * Checks if file or buffer contains HTML or MHTML headers
    */
-  static isZipOrOle2(filePath) {
+  static isHtmlOrMhtml(filePath) {
     try {
       const fd = fs.openSync(filePath, 'r');
-      const buf = Buffer.alloc(8);
-      fs.readSync(fd, buf, 0, 8, 0);
+      const buf = Buffer.alloc(2048);
+      const bytesRead = fs.readSync(fd, buf, 0, 2048, 0);
       fs.closeSync(fd);
-      const isZip = buf[0] === 0x50 && buf[1] === 0x4B; // PK..
-      const isOle2 = buf[0] === 0xD0 && buf[1] === 0xCF && buf[2] === 0x11 && buf[3] === 0xE0;
-      return isZip || isOle2;
+      const str = buf.toString('utf8', 0, bytesRead);
+      return str.includes('MIME-Version') ||
+             str.includes('multipart/related') ||
+             str.includes('<html') ||
+             str.includes('<HTML') ||
+             str.includes('<table') ||
+             str.includes('<TABLE');
     } catch (e) {
       return false;
     }
   }
 
-  /**
-   * Checks if buffer starts with ZIP (PK..) or OLE2 (\xD0\xCF..) signature
-   */
-  static isZipOrOle2Buffer(buf) {
-    if (!buf || buf.length < 4) return false;
-    const isZip = buf[0] === 0x50 && buf[1] === 0x4B;
-    const isOle2 = buf[0] === 0xD0 && buf[1] === 0xCF && buf[2] === 0x11 && buf[3] === 0xE0;
-    return isZip || isOle2;
+  static isHtmlOrMhtmlBuffer(buf) {
+    if (!buf || buf.length === 0) return false;
+    const str = buf.slice(0, Math.min(2048, buf.length)).toString('utf8');
+    return str.includes('MIME-Version') ||
+           str.includes('multipart/related') ||
+           str.includes('<html') ||
+           str.includes('<HTML') ||
+           str.includes('<table') ||
+           str.includes('<TABLE');
   }
 
   /**
@@ -98,7 +105,6 @@ class SpreadsheetReader {
 
             if (currentRowCells.length > 0) {
               if (!headers) {
-                // First non-empty row defines table headers
                 headers = currentRowCells.map(h => h.trim());
               } else {
                 const rowObj = {};
@@ -195,18 +201,12 @@ class SpreadsheetReader {
   }
 
   /**
-   * Reads any spreadsheet file (XLSX, XLS, MHTML, HTML) as object rows:
+   * Reads any spreadsheet file (XLSX, XLS, MHTML, HTML, TSV) as object rows:
    * { headers: string[], rows: object[] }
    */
   static async readSpreadsheet(source, options = {}) {
     if (Buffer.isBuffer(source)) {
-      if (this.isZipOrOle2Buffer(source)) {
-        const wb = XLSX.read(source, { type: 'buffer', cellFormula: false });
-        const sheetName = wb.SheetNames[0];
-        const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '' });
-        const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
-        return { headers, rows };
-      } else {
+      if (this.isHtmlOrMhtmlBuffer(source)) {
         const tempPath = path.join(__dirname, 'uploads', `temp_${Date.now()}_${Math.random().toString(36).substring(2)}.tmp`);
         fs.writeFileSync(tempPath, source);
         try {
@@ -214,6 +214,12 @@ class SpreadsheetReader {
         } finally {
           try { fs.unlinkSync(tempPath); } catch (e) {}
         }
+      } else {
+        const wb = XLSX.read(source, { type: 'buffer', cellFormula: false });
+        const sheetName = wb.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '' });
+        const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
+        return { headers, rows };
       }
     }
 
@@ -222,14 +228,14 @@ class SpreadsheetReader {
         throw new Error(`Fichier introuvable : ${source}`);
       }
 
-      if (this.isZipOrOle2(source)) {
+      if (this.isHtmlOrMhtml(source)) {
+        return await this.parseHtmlOrMhtmlFile(source);
+      } else {
         const wb = XLSX.readFile(source, { cellFormula: false });
         const sheetName = wb.SheetNames[0];
         const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '' });
         const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
         return { headers, rows };
-      } else {
-        return await this.parseHtmlOrMhtmlFile(source);
       }
     }
 
@@ -244,12 +250,12 @@ class SpreadsheetReader {
       if (!fs.existsSync(source)) {
         throw new Error(`Fichier introuvable : ${source}`);
       }
-      if (this.isZipOrOle2(source)) {
+      if (this.isHtmlOrMhtml(source)) {
+        return await this.parseHtmlOrMhtmlFileAsArrays(source);
+      } else {
         const wb = XLSX.readFile(source, { cellFormula: false });
         const sheetName = wb.SheetNames[0];
         return XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1 });
-      } else {
-        return await this.parseHtmlOrMhtmlFileAsArrays(source);
       }
     }
     throw new Error('Source de fichier non supportée.');
