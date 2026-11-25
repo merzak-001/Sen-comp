@@ -1,14 +1,15 @@
-const sql = require('mssql');
-const path = require('path');
-const fs = require('fs');
-const XLSX = require('xlsx');
+import sql from 'mssql';
+import path from 'path';
+import fs from 'fs';
+import * as XLSX from 'xlsx';
+import type { SqlTestResult } from '../types/domain';
 
 const dbServer = process.env.DB_SERVER || process.env.SQL_SERVER_HOST || '192.168.1.253';
 const dbName = process.env.DB_NAME || process.env.SQL_SERVER_DATABASE || 'SensusSAPDB';
 const dbUser = process.env.DB_USER || 'sa';
 const dbPassword = process.env.DB_PASSWORD || '0000';
 
-const dbConfig = {
+const dbConfig: sql.config = {
   server: dbServer,
   database: dbName,
   user: dbUser,
@@ -27,28 +28,42 @@ const dbConfig = {
   }
 };
 
-const OS_APPRO_DIR = 'C:/Users/msai/OneDrive - Sensus Germany GmbH & Co. KG/Documents/OS-appro';
+const OS_APPRO_DIR =
+  'C:/Users/msai/OneDrive - Sensus Germany GmbH & Co. KG/Documents/OS-appro';
 
-class SqlDatabase {
-  constructor() {
-    this.isConnected = false;
-    this.pool = null;
-    this.poolPromise = null;
-  }
+export interface InvoiceDbFilters {
+  search?: string;
+  market?: string;
+  category?: string;
+  year?: string | number;
+  month?: string | number;
+}
 
-  async getPool() {
+export interface ObservationInput {
+  id: string | number;
+  category?: string;
+  text?: string;
+  isCustom?: boolean;
+}
+
+export class SqlDatabase {
+  public isConnected = false;
+  private pool: sql.ConnectionPool | null = null;
+  private poolPromise: Promise<sql.ConnectionPool> | null = null;
+
+  async getPool(): Promise<sql.ConnectionPool> {
     if (this.pool && this.pool.connected) return this.pool;
     if (this.poolPromise) return this.poolPromise;
 
     this.poolPromise = new sql.ConnectionPool(dbConfig)
       .connect()
-      .then(p => {
+      .then((p) => {
         this.pool = p;
         this.isConnected = true;
         this.poolPromise = null;
         return p;
       })
-      .catch(err => {
+      .catch((err) => {
         this.pool = null;
         this.poolPromise = null;
         this.isConnected = false;
@@ -58,24 +73,33 @@ class SqlDatabase {
     return this.poolPromise;
   }
 
-  async query(sqlText, params = []) {
+  async query<T = Record<string, any>>(sqlText: string, _params: unknown[] = []): Promise<T[]> {
     const pool = await this.getPool();
-    const result = await pool.request().query(sqlText);
+    const result = await pool.request().query<T>(sqlText);
     return result.recordset || [];
   }
 
-  async testConnection() {
+  async testConnection(): Promise<SqlTestResult> {
     try {
-      const res = await this.query('SELECT DB_NAME() AS db, @@VERSION AS ver');
+      const res = await this.query<{ db: string; ver: string }>(
+        'SELECT DB_NAME() AS db, @@VERSION AS ver'
+      );
       this.isConnected = true;
       return { success: true, db: res[0]?.db, version: res[0]?.ver };
     } catch (err) {
       this.isConnected = false;
-      return { success: false, error: err.message };
+      const message = err instanceof Error ? err.message : String(err);
+      return { success: false, error: message };
     }
   }
 
-  async getDatabaseStats() {
+  async getDatabaseStats(): Promise<{
+    connected: boolean;
+    server: string;
+    database: string;
+    stats: Record<string, unknown>;
+    error?: string;
+  }> {
     try {
       const counts = await this.query(`
         SELECT 
@@ -91,11 +115,12 @@ class SqlDatabase {
         stats: counts[0] || {}
       };
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
       return {
         connected: false,
         server: dbServer,
         database: dbName,
-        error: err.message,
+        error: message,
         stats: {}
       };
     }
@@ -105,7 +130,7 @@ class SqlDatabase {
    * INCREMENTAL UPSERT / SYNC FROM DOCUMENTS/OS-APPRO
    * Updates existing records, inserts new ones, never drops tables.
    */
-  async syncMasterFilesFromOSAppro() {
+  async syncMasterFilesFromOSAppro(): Promise<Record<string, number>> {
     console.log('[SqlDatabase] Starting incremental UPSERT from Documents/OS-appro into SQL Server...');
     const result = {
       chartOfAccounts: 0,
@@ -123,7 +148,7 @@ class SqlDatabase {
     const targetChartPath = fs.existsSync(pathNewChart) ? pathNewChart : pathOldChart;
     if (fs.existsSync(targetChartPath)) {
       const wb = XLSX.readFile(targetChartPath);
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[wb.SheetNames[0]]);
       for (const r of rows) {
         const boal = String(r['Cpte gén.'] || '').trim();
         const dz = String(r['Autre cpte'] || r['Dz'] || '').trim();
@@ -141,7 +166,9 @@ class SqlDatabase {
           result.chartOfAccounts++;
         }
       }
-      console.log(`[SqlDatabase] Upserted ${result.chartOfAccounts} Chart of Accounts from ${path.basename(targetChartPath)}.`);
+      console.log(
+        `[SqlDatabase] Upserted ${result.chartOfAccounts} Chart of Accounts from ${path.basename(targetChartPath)}.`
+      );
 
       // Update GeneralLedgerBalances with the refreshed scf_account
       await this.query(`
@@ -157,7 +184,7 @@ class SqlDatabase {
     const pathBal1026 = path.join(OS_APPRO_DIR, 'balance 102026.xls');
     if (fs.existsSync(pathBal1026)) {
       const wb = XLSX.readFile(pathBal1026);
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+      const rows = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[wb.SheetNames[0]], { header: 1 });
       for (let i = 5; i < rows.length; i++) {
         const r = rows[i];
         if (!r || !r[3]) continue;
@@ -194,7 +221,7 @@ class SqlDatabase {
     const pathBal25 = path.join(OS_APPRO_DIR, 'balance 25.xls');
     if (fs.existsSync(pathBal25)) {
       const wb = XLSX.readFile(pathBal25);
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+      const rows = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[wb.SheetNames[0]], { header: 1 });
       for (let i = 1; i < rows.length; i++) {
         const r = rows[i];
         if (!r || !r[0]) continue;
@@ -228,11 +255,13 @@ class SqlDatabase {
     const pathDebours = path.join(OS_APPRO_DIR, 'debours.xlsx');
     if (fs.existsSync(pathDebours)) {
       const wb = XLSX.readFile(pathDebours);
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[wb.SheetNames[0]]);
       for (const r of rows) {
         const piece = String(r['Nº pièce'] || '').trim();
         const amt = Math.abs(Number(r['Montant en devise interne'] || r['Montant en dev.rep.'] || 0));
-        const sName = String(r['Texte'] || r['Compte contrepartie'] || 'TRANSIT / DOUANE').trim().replace(/'/g, "''");
+        const sName = String(r['Texte'] || r['Compte contrepartie'] || 'TRANSIT / DOUANE')
+          .trim()
+          .replace(/'/g, "''");
         const ref = String(r['Référence'] || r['Affectation'] || '').trim().replace(/'/g, "''");
         if (piece && amt > 0) {
           await this.query(`
@@ -249,7 +278,7 @@ class SqlDatabase {
     const pathTva = path.join(OS_APPRO_DIR, 'tva 05102026.xlsx');
     if (fs.existsSync(pathTva)) {
       const wb = XLSX.readFile(pathTva);
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[wb.SheetNames[0]]);
       for (const r of rows) {
         const piece = String(r['Nº pièce'] || '').trim();
         const amt = Math.abs(Number(r['Montant en devise interne'] || 0));
@@ -269,7 +298,7 @@ class SqlDatabase {
     const pathRetunie = path.join(OS_APPRO_DIR, 'retunie.xlsx');
     if (fs.existsSync(pathRetunie)) {
       const wb = XLSX.readFile(pathRetunie);
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[wb.SheetNames[0]]);
       for (const r of rows) {
         const piece = String(r['Nº pièce'] || '').trim();
         const amt = Math.abs(Number(r['Montant en devise interne'] || 0));
@@ -286,8 +315,9 @@ class SqlDatabase {
     }
 
     // 7. Supplier Invoices (From reconciled store)
-    const storage = require('./storage');
-    const invoices = Array.from(storage.invoices.values());
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const storage = require('./storage').default || require('./storage');
+    const invoices = Array.from((storage.invoices as Map<string, Record<string, any>>).values());
     for (const inv of invoices) {
       const piece = String(inv.piece || '').trim();
       if (!piece) continue;
@@ -338,22 +368,24 @@ class SqlDatabase {
   }
 
   // Fetch Invoices directly from SQL Server
-  async getInvoicesFromDb(filters = {}) {
-    let whereClauses = ["status = 'ACTIVE'"];
+  async getInvoicesFromDb(filters: InvoiceDbFilters = {}): Promise<Record<string, any>[]> {
+    const whereClauses = ["status = 'ACTIVE'"];
     if (filters.search) {
       const s = filters.search.replace(/'/g, "''").toLowerCase();
-      whereClauses.push(`(LOWER(piece) LIKE '%${s}%' OR LOWER(supplier_name) LIKE '%${s}%' OR LOWER(affectation) LIKE '%${s}%')`);
+      whereClauses.push(
+        `(LOWER(piece) LIKE '%${s}%' OR LOWER(supplier_name) LIKE '%${s}%' OR LOWER(affectation) LIKE '%${s}%')`
+      );
     }
-    if (filters.market === 'LOCAL') whereClauses.push("is_local = 1");
-    if (filters.market === 'ETRANGER') whereClauses.push("is_local = 0");
+    if (filters.market === 'LOCAL') whereClauses.push('is_local = 1');
+    if (filters.market === 'ETRANGER') whereClauses.push('is_local = 0');
     if (filters.category && filters.category !== 'ALL') {
       whereClauses.push(`category = '${filters.category.replace(/'/g, "''")}'`);
     }
     if (filters.year) {
-      whereClauses.push(`year = ${parseInt(filters.year, 10)}`);
+      whereClauses.push(`year = ${parseInt(String(filters.year), 10)}`);
     }
     if (filters.month && filters.month !== 'ALL') {
-      whereClauses.push(`month = ${parseInt(filters.month, 10)}`);
+      whereClauses.push(`month = ${parseInt(String(filters.month), 10)}`);
     }
 
     const sqlText = `
@@ -369,13 +401,20 @@ class SqlDatabase {
   }
 
   // Fetch GL Balances from SQL Server
-  async getGLBalancesFromDb(periodKey = '102026', filterType = 'all') {
-    let whereClauses = [`period_key = '${periodKey}'`];
+  async getGLBalancesFromDb(
+    periodKey = '102026',
+    filterType = 'all'
+  ): Promise<Record<string, any>[]> {
+    const whereClauses = [`period_key = '${periodKey}'`];
 
     if (filterType === 'charges') {
-      whereClauses.push("(scf_account LIKE '60%' OR boal_account LIKE '4000%' OR boal_account LIKE '4001%' OR boal_account LIKE '4403%' OR boal_account LIKE '4404%' OR boal_account LIKE '4409%' OR account_desc LIKE '%ACHATS CONSOM%')");
+      whereClauses.push(
+        "(scf_account LIKE '60%' OR boal_account LIKE '4000%' OR boal_account LIKE '4001%' OR boal_account LIKE '4403%' OR boal_account LIKE '4404%' OR boal_account LIKE '4409%' OR account_desc LIKE '%ACHATS CONSOM%')"
+      );
     } else if (filterType === 'stocks') {
-      whereClauses.push("(scf_account LIKE '3%' OR boal_account LIKE '3000%' OR boal_account LIKE '7800%' OR boal_account LIKE '7900%' OR account_desc LIKE '%STOCK%' OR account_desc LIKE '%MATIERE%')");
+      whereClauses.push(
+        "(scf_account LIKE '3%' OR boal_account LIKE '3000%' OR boal_account LIKE '7800%' OR boal_account LIKE '7900%' OR account_desc LIKE '%STOCK%' OR account_desc LIKE '%MATIERE%')"
+      );
     }
 
     const sqlText = `
@@ -389,13 +428,19 @@ class SqlDatabase {
   }
 
   // Fetch Transit & Douane summary directly from SQL Server
-  async getTransitSummaryFromDb(year = null, month = null) {
+  async getTransitSummaryFromDb(
+    year: string | number | null = null,
+    month: string | number | null = null
+  ): Promise<{
+    totals: Record<string, any>;
+    deboursBySupplier: Record<string, any>[];
+  }> {
     let whereClause = "status = 'ACTIVE'";
     if (year) {
-      whereClause += ` AND year = ${parseInt(year, 10)}`;
+      whereClause += ` AND year = ${parseInt(String(year), 10)}`;
     }
     if (month && month !== 'ALL') {
-      whereClause += ` AND month = ${parseInt(month, 10)}`;
+      whereClause += ` AND month = ${parseInt(String(month), 10)}`;
     }
     const totals = await this.query(`
       SELECT 
@@ -421,7 +466,7 @@ class SqlDatabase {
   }
 
   // Save / Upsert report observation into SQL Server
-  async saveObservationToDb(periodKey, obs) {
+  async saveObservationToDb(periodKey: string, obs: ObservationInput): Promise<void> {
     const pKey = String(periodKey).replace(/'/g, "''");
     const oId = String(obs.id).replace(/'/g, "''");
     const cat = String(obs.category || 'Gestion').replace(/'/g, "''");
@@ -441,37 +486,47 @@ class SqlDatabase {
   }
 
   // Delete observation from SQL Server
-  async deleteObservationFromDb(periodKey, obsId) {
+  async deleteObservationFromDb(periodKey: string, obsId: string | number): Promise<void> {
     const pKey = String(periodKey).replace(/'/g, "''");
     const oId = String(obsId).replace(/'/g, "''");
-    await this.query(`DELETE FROM ReportObservations WHERE period_key = '${pKey}' AND obs_id = '${oId}'`);
+    await this.query(
+      `DELETE FROM ReportObservations WHERE period_key = '${pKey}' AND obs_id = '${oId}'`
+    );
   }
 
   // Load observations from SQL Server
-  async getObservationsFromDb(periodKey) {
+  async getObservationsFromDb(periodKey: string): Promise<Record<string, any>[]> {
     const pKey = String(periodKey).replace(/'/g, "''");
-    return await this.query(`SELECT obs_id AS id, category, text, is_custom AS isCustom FROM ReportObservations WHERE period_key = '${pKey}' ORDER BY id ASC`);
+    return await this.query(
+      `SELECT obs_id AS id, category, text, is_custom AS isCustom FROM ReportObservations WHERE period_key = '${pKey}' ORDER BY id ASC`
+    );
   }
 
   // Update Invoice Category in SQL Server
-  async updateInvoiceCategoryInDb(piece, category) {
+  async updateInvoiceCategoryInDb(piece: string, category: string): Promise<void> {
     const p = String(piece).replace(/'/g, "''");
     const c = String(category).replace(/'/g, "''");
-    await this.query(`UPDATE SupplierInvoices SET category = '${c}', updated_at = GETDATE() WHERE piece = '${p}'`);
+    await this.query(
+      `UPDATE SupplierInvoices SET category = '${c}', updated_at = GETDATE() WHERE piece = '${p}'`
+    );
   }
 
   // Delete Invoice (soft-delete) in SQL Server
-  async deleteInvoiceInDb(piece) {
+  async deleteInvoiceInDb(piece: string): Promise<void> {
     const p = String(piece).replace(/'/g, "''");
-    await this.query(`UPDATE SupplierInvoices SET status = 'DELETED', updated_at = GETDATE() WHERE piece = '${p}'`);
+    await this.query(
+      `UPDATE SupplierInvoices SET status = 'DELETED', updated_at = GETDATE() WHERE piece = '${p}'`
+    );
   }
 
   // Restore Invoice in SQL Server
-  async restoreInvoiceInDb(piece) {
+  async restoreInvoiceInDb(piece: string): Promise<void> {
     const p = String(piece).replace(/'/g, "''");
-    await this.query(`UPDATE SupplierInvoices SET status = 'ACTIVE', updated_at = GETDATE() WHERE piece = '${p}'`);
+    await this.query(
+      `UPDATE SupplierInvoices SET status = 'ACTIVE', updated_at = GETDATE() WHERE piece = '${p}'`
+    );
   }
 }
 
-module.exports = new SqlDatabase();
-
+const sqlDb = new SqlDatabase();
+export default sqlDb;

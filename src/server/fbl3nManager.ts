@@ -1,18 +1,41 @@
-const fs = require('fs');
-const path = require('path');
-const XLSX = require('xlsx');
-const sqlDb = require('./sqlDb');
-const SpreadsheetReader = require('./spreadsheetReader');
+import path from 'path';
+import sqlDb from './sqlDb';
+import SpreadsheetReader from './spreadsheetReader';
+import storage from './storage';
 
-class FBL3NManager {
-  constructor() {
-    this.defaultFilePath = path.join(
-      'C:/Users/msai/OneDrive - Sensus Germany GmbH & Co. KG/Documents/OS-appro',
-      'FBL3N 051026.xlsx'
-    );
-  }
+export interface FBL3NImportOptions {
+  importMode?: 'month' | 'year' | 'all' | string;
+  clearExisting?: boolean;
+  sourceFileName?: string;
+}
 
-  parseExcelDate(v) {
+export interface FBL3NLineItemFilters {
+  year?: string;
+  month?: string;
+  year_month?: string;
+  account?: string;
+  doc_type?: string;
+  search?: string;
+  limit?: string | number;
+  offset?: string | number;
+}
+
+export interface ExtractedRowPeriod {
+  fiscalYear: number | null;
+  fiscalMonth: number | null;
+  yearMonth: string;
+  postDate: string | null;
+  docDate: string | null;
+  period: number | null;
+}
+
+export class FBL3NManager {
+  public defaultFilePath = path.join(
+    'C:/Users/msai/OneDrive - Sensus Germany GmbH & Co. KG/Documents/OS-appro',
+    'FBL3N 051026.xlsx'
+  );
+
+  parseExcelDate(v: unknown): string | null {
     if (!v) return null;
     if (typeof v === 'number') {
       const d = new Date(Math.round((v - 25569) * 86400 * 1000));
@@ -34,7 +57,7 @@ class FBL3NManager {
     return null;
   }
 
-  parseAmount(v) {
+  parseAmount(v: unknown): number {
     if (typeof v === 'number') return v;
     if (!v) return 0;
     let s = String(v).trim().replace(/\s/g, '').replace(/\u00a0/g, '');
@@ -51,43 +74,44 @@ class FBL3NManager {
     return isNaN(n) ? 0 : n;
   }
 
-  parseDate(v) {
+  parseDate(v: unknown): string | null {
     return this.parseExcelDate(v);
   }
 
-  escapeSql(str, maxLen = 0) {
+  escapeSql(str: unknown, maxLen = 0): string {
     if (str === null || str === undefined) return 'NULL';
     let s = String(str).replace(/'/g, "''").trim();
     if (maxLen > 0 && s.length > maxLen) s = s.substring(0, maxLen);
     return `N'${s}'`;
   }
 
-  /**
-   * Helper to accurately extract fiscal year, month, and date from an FBL3N row
-   */
-  extractRowPeriod(r) {
+  extractRowPeriod(r: Record<string, unknown>): ExtractedRowPeriod {
     const yearMonth = String(r['Année/mois'] || r['Année/Mois'] || r['Year/Month'] || '').trim();
     const postDate = this.parseExcelDate(r['Date comptable'] || r['Posting Date']);
-    const docDate = this.parseExcelDate(r['Date de pièce'] || r['Date pièce'] || r['Document Date']);
+    const docDate = this.parseExcelDate(
+      r['Date de pièce'] || r['Date pièce'] || r['Document Date']
+    );
     const assignment = String(r['Affectation'] || r['Assignment'] || '').trim();
-    const period = parseInt(r['Période comptable'] || r['Période'] || r['Period']) || null;
+    const period =
+      parseInt(String(r['Période comptable'] || r['Période'] || r['Period'] || ''), 10) ||
+      null;
 
-    let fiscalYear = null;
-    let fiscalMonth = null;
+    let fiscalYear: number | null = null;
+    let fiscalMonth: number | null = null;
 
     if (yearMonth && yearMonth.includes('/')) {
       const parts = yearMonth.split('/');
-      fiscalYear = parseInt(parts[0]) || null;
-      fiscalMonth = parseInt(parts[1]) || null;
+      fiscalYear = parseInt(parts[0], 10) || null;
+      fiscalMonth = parseInt(parts[1], 10) || null;
     } else if (postDate) {
-      fiscalYear = parseInt(postDate.substring(0, 4)) || null;
-      fiscalMonth = parseInt(postDate.substring(5, 7)) || null;
+      fiscalYear = parseInt(postDate.substring(0, 4), 10) || null;
+      fiscalMonth = parseInt(postDate.substring(5, 7), 10) || null;
     } else if (docDate) {
-      fiscalYear = parseInt(docDate.substring(0, 4)) || null;
-      fiscalMonth = parseInt(docDate.substring(5, 7)) || null;
+      fiscalYear = parseInt(docDate.substring(0, 4), 10) || null;
+      fiscalMonth = parseInt(docDate.substring(5, 7), 10) || null;
     } else if (assignment && /^20\d{2}/.test(assignment)) {
-      fiscalYear = parseInt(assignment.substring(0, 4)) || null;
-      fiscalMonth = parseInt(assignment.substring(4, 6)) || null;
+      fiscalYear = parseInt(assignment.substring(0, 4), 10) || null;
+      fiscalMonth = parseInt(assignment.substring(4, 6), 10) || null;
     } else if (period) {
       fiscalMonth = period;
       fiscalYear = 2026;
@@ -101,28 +125,37 @@ class FBL3NManager {
     return { fiscalYear, fiscalMonth, yearMonth: formattedYearMonth, postDate, docDate, period };
   }
 
-  /**
-   * Imports FBL3N line items from an Excel file into SQL Server
-   * @param {string|Buffer} source - File path string or file buffer
-   * @param {object} options - { importMode: 'month'|'year'|'all', clearExisting: boolean, sourceFileName: string }
-   */
-  async importFromExcel(source, options = {}) {
+  async importFromExcel(
+    source: string | Buffer,
+    options: FBL3NImportOptions = {}
+  ): Promise<{
+    success: boolean;
+    totalInserted: number;
+    durationSeconds: string;
+    years: number[];
+    months: number[];
+    periods: string[];
+    importMode: string;
+  }> {
     const startTime = Date.now();
-    const { headers, rows: rawRows } = await SpreadsheetReader.readSpreadsheet(source, options);
+    const { headers, rows: rawRows } = await SpreadsheetReader.readSpreadsheet(
+      source,
+      options as Record<string, unknown>
+    );
 
     if (!rawRows || rawRows.length === 0) {
-      throw new Error(`Aucune écriture trouvée dans le fichier`);
+      throw new Error('Aucune écriture trouvée dans le fichier');
     }
 
-    console.log(`[FBL3NManager] Read ${rawRows.length} rows from file (headers: ${headers.length}).`);
+    console.log(
+      `[FBL3NManager] Read ${rawRows.length} rows from file (headers: ${headers.length}).`
+    );
 
-    // Prepare table if not exists
     await this.ensureTableSchema();
 
-    // Determine fiscal years and periods (year + month) present in this file
-    const yearsInFile = new Set();
-    const periodsMap = new Map(); // Map<year, Set<month>>
-    const periodsList = new Set(); // Set<"YYYY/MM">
+    const yearsInFile = new Set<number>();
+    const periodsMap = new Map<number, Set<number>>();
+    const periodsList = new Set<string>();
 
     for (let i = 0; i < rawRows.length; i++) {
       const r = rawRows[i];
@@ -137,7 +170,7 @@ class FBL3NManager {
           periodsMap.set(fiscalYear, new Set());
         }
         if (fiscalMonth) {
-          periodsMap.get(fiscalYear).add(fiscalMonth);
+          periodsMap.get(fiscalYear)!.add(fiscalMonth);
           periodsList.add(yearMonth);
         }
       }
@@ -145,9 +178,10 @@ class FBL3NManager {
     if (yearsInFile.size === 0) yearsInFile.add(2026);
 
     const importMode = options.importMode || (options.clearExisting ? 'all' : 'month');
-    console.log(`[FBL3NManager] Import Mode: "${importMode}". Found years: [${Array.from(yearsInFile).join(', ')}], periods: [${Array.from(periodsList).join(', ')}]`);
+    console.log(
+      `[FBL3NManager] Import Mode: "${importMode}". Found years: [${Array.from(yearsInFile).join(', ')}], periods: [${Array.from(periodsList).join(', ')}]`
+    );
 
-    // Handle data replacement according to user mode
     if (importMode === 'all' || options.clearExisting === true) {
       console.log('[FBL3NManager] Clearing entire FBL3NLineItems table...');
       await sqlDb.query('TRUNCATE TABLE FBL3NLineItems');
@@ -156,11 +190,9 @@ class FBL3NManager {
       console.log(`[FBL3NManager] Mode Annuel: Refreshing entire year(s) ${yearsArr.join(', ')}...`);
       await sqlDb.query(`DELETE FROM FBL3NLineItems WHERE fiscal_year IN (${yearsArr.join(',')})`);
     } else {
-      // Default: 'month' (Granular incremental by month & year)
-      // Only delete records for the specific month(s) of the specific year(s) present in the upload!
-      const whereClauses = [];
+      const whereClauses: string[] = [];
       for (const [yr, moSet] of periodsMap.entries()) {
-        const moArr = Array.from(moSet).filter(m => m !== null && !isNaN(m));
+        const moArr = Array.from(moSet).filter((m) => m !== null && !isNaN(m));
         if (moArr.length > 0) {
           whereClauses.push(`(fiscal_year = ${yr} AND fiscal_month IN (${moArr.join(',')}))`);
         } else {
@@ -175,11 +207,11 @@ class FBL3NManager {
     }
 
     let insertedCount = 0;
-    const batchSize = 400; // Safe batch size well under SQL Server limits
-    let currentBatchValues = [];
+    const batchSize = 400;
+    let currentBatchValues: string[] = [];
 
-    const yearsSet = new Set(yearsInFile);
-    const monthsSet = new Set();
+    const yearsSet = new Set<number>(yearsInFile);
+    const monthsSet = new Set<number>();
 
     for (let i = 0; i < rawRows.length; i++) {
       const r = rawRows[i];
@@ -190,7 +222,9 @@ class FBL3NManager {
 
       const ref = String(r['Référence'] || r['Reference'] || '').trim();
       const supplierId = String(r['Fournisseur'] || r['Vendor'] || '').trim();
-      const counterparty = String(r['Compte contrepartie'] || r['Offsetting account'] || '').trim();
+      const counterparty = String(
+        r['Compte contrepartie'] || r['Offsetting account'] || ''
+      ).trim();
       const docType = String(r['Type de pièce'] || r['Document Type'] || '').trim();
       const postKey = String(r['Clé comptabilisation'] || '').trim();
       const amtLocal = this.parseAmount(r['Montant en devise interne']);
@@ -202,7 +236,8 @@ class FBL3NManager {
       const textDesc = String(r['Texte'] || r['Text'] || '').trim();
       const assignment = String(r['Affectation'] || r['Assignment'] || '').trim();
 
-      const { fiscalYear, fiscalMonth, yearMonth, postDate, docDate, period } = this.extractRowPeriod(r);
+      const { fiscalYear, fiscalMonth, yearMonth, postDate, docDate, period } =
+        this.extractRowPeriod(r);
 
       if (fiscalYear) yearsSet.add(fiscalYear);
       if (fiscalMonth) monthsSet.add(fiscalMonth);
@@ -255,8 +290,9 @@ class FBL3NManager {
     }
 
     const durationSec = ((Date.now() - startTime) / 1000).toFixed(2);
-    console.log(`[FBL3NManager] Successfully inserted ${insertedCount} FBL3N line items in ${durationSec}s.`);
-
+    console.log(
+      `[FBL3NManager] Successfully inserted ${insertedCount} FBL3N line items in ${durationSec}s.`
+    );
 
     return {
       success: true,
@@ -269,9 +305,9 @@ class FBL3NManager {
     };
   }
 
-  async flushBatch(valuesArr) {
+  async flushBatch(valuesArr: string[]): Promise<void> {
     if (valuesArr.length === 0) return;
-    const sql = `
+    const sqlText = `
       INSERT INTO FBL3NLineItems (
         account, doc_number, reference, supplier_id, counterparty_account,
         year_month, fiscal_year, fiscal_month, doc_type, posting_date, doc_date,
@@ -279,10 +315,10 @@ class FBL3NManager {
         amount_doc, currency_doc, tax_code, clearing_doc, text_desc, assignment
       ) VALUES ${valuesArr.join(',\n')};
     `;
-    await sqlDb.query(sql);
+    await sqlDb.query(sqlText);
   }
 
-  async ensureTableSchema() {
+  async ensureTableSchema(): Promise<void> {
     await sqlDb.query(`
       IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'FBL3NLineItems')
       BEGIN
@@ -321,19 +357,16 @@ class FBL3NManager {
     `);
   }
 
-  /**
-   * Retrieves line items with flexible filters and pagination
-   */
-  async getLineItems(filters = {}) {
-    let where = ['1=1'];
+  async getLineItems(filters: FBL3NLineItemFilters = {}): Promise<Record<string, unknown>> {
+    const where = ['1=1'];
 
     if (filters.year && filters.year !== 'ALL') {
-      const y = parseInt(filters.year);
+      const y = parseInt(filters.year, 10);
       if (!isNaN(y)) where.push(`f.fiscal_year = ${y}`);
     }
 
     if (filters.month && filters.month !== 'ALL') {
-      const m = parseInt(filters.month);
+      const m = parseInt(filters.month, 10);
       if (!isNaN(m)) where.push(`f.fiscal_month = ${m}`);
     }
 
@@ -344,7 +377,9 @@ class FBL3NManager {
 
     if (filters.account && filters.account !== 'ALL') {
       const acc = String(filters.account).replace(/'/g, "''").trim();
-      where.push(`(f.account = '${acc}' OR c.scf_account = '${acc}' OR c.scf_account LIKE '${acc}%')`);
+      where.push(
+        `(f.account = '${acc}' OR c.scf_account = '${acc}' OR c.scf_account LIKE '${acc}%')`
+      );
     }
 
     if (filters.doc_type && filters.doc_type !== 'ALL') {
@@ -367,7 +402,6 @@ class FBL3NManager {
 
     const whereClause = where.join(' AND ');
 
-    // 1. Get Summary Totals
     const statsSql = `
       SELECT 
         COUNT(*) AS totalCount,
@@ -379,11 +413,15 @@ class FBL3NManager {
       WHERE ${whereClause};
     `;
     const statsRes = await sqlDb.query(statsSql);
-    const stats = statsRes[0] || { totalCount: 0, totalDebit: 0, totalCredit: 0, netBalance: 0 };
+    const stats = statsRes[0] || {
+      totalCount: 0,
+      totalDebit: 0,
+      totalCredit: 0,
+      netBalance: 0
+    };
 
-    // 2. Paginated rows
-    const limit = Math.min(Math.max(parseInt(filters.limit) || 100, 1), 500);
-    const offset = Math.max(parseInt(filters.offset) || 0, 0);
+    const limit = Math.min(Math.max(parseInt(String(filters.limit || 100), 10) || 100, 1), 500);
+    const offset = Math.max(parseInt(String(filters.offset || 0), 10) || 0, 0);
 
     const rowsSql = `
       SELECT 
@@ -437,10 +475,7 @@ class FBL3NManager {
     };
   }
 
-  /**
-   * Retrieves available filter options (years, months, top accounts)
-   */
-  async getFilterOptions() {
+  async getFilterOptions(): Promise<Record<string, unknown>> {
     const yearsRes = await sqlDb.query(`
       SELECT DISTINCT fiscal_year AS [year]
       FROM FBL3NLineItems
@@ -478,33 +513,32 @@ class FBL3NManager {
     `);
 
     return {
-      years: yearsRes.map(r => r.year),
+      years: yearsRes.map((r) => r.year),
       periods: monthsRes,
       accounts: accountsRes,
       docTypes: docTypesRes
     };
   }
 
-  /**
-   * Returns list of distinct fiscal years in FBL3NLineItems
-   */
-  async getAvailableYears() {
+  async getAvailableYears(): Promise<number[]> {
     const yearsRes = await sqlDb.query(`
       SELECT DISTINCT fiscal_year AS year 
       FROM FBL3NLineItems 
       WHERE fiscal_year IS NOT NULL 
       ORDER BY fiscal_year DESC;
     `);
-    const years = yearsRes.map(r => r.year).filter(y => y && y > 2000);
+    const years = yearsRes
+      .map((r) => Number(r.year))
+      .filter((y) => y && y > 2000);
     return years.length > 0 ? years : [2026];
   }
 
-  /**
-   * Computes Class 60 / Consommation charges directly from FBL3N for a specific year and optional month
-   */
-  async getConsommationChargesByYear(year, month = null) {
-    const yr = parseInt(year, 10);
-    const mo = (month && month !== 'ALL') ? parseInt(month, 10) : null;
+  async getConsommationChargesByYear(
+    year: string | number,
+    month: string | number | null = null
+  ): Promise<Record<string, unknown>[]> {
+    const yr = parseInt(String(year), 10);
+    const mo = month && month !== 'ALL' ? parseInt(String(month), 10) : null;
     const monthFilter = mo ? `AND f.fiscal_month = ${mo}` : '';
     return await sqlDb.query(`
       SELECT 
@@ -523,15 +557,16 @@ class FBL3NManager {
     `);
   }
 
-  /**
-   * Synchronizes vendor invoice line items (KR, RE, KG) from FBL3NLineItems
-   * into SupplierInvoices (SQL Server) and storage.invoices (memory / persistence).
-   */
-  async syncVendorInvoicesFromFBL3N(fiscalYear = null, fiscalMonth = null) {
+  async syncVendorInvoicesFromFBL3N(
+    fiscalYear: string | number | null = null,
+    fiscalMonth: string | number | null = null
+  ): Promise<{ count: number; success?: boolean; message?: string; error?: string }> {
     try {
       let whereClause = "doc_type IN ('KR', 'RE', 'KG') AND posting_key IN ('31', '21')";
-      if (fiscalYear) whereClause += ` AND fiscal_year = ${parseInt(fiscalYear, 10)}`;
-      if (fiscalMonth && fiscalMonth !== 'ALL') whereClause += ` AND fiscal_month = ${parseInt(fiscalMonth, 10)}`;
+      if (fiscalYear) whereClause += ` AND fiscal_year = ${parseInt(String(fiscalYear), 10)}`;
+      if (fiscalMonth && fiscalMonth !== 'ALL') {
+        whereClause += ` AND fiscal_month = ${parseInt(String(fiscalMonth), 10)}`;
+      }
 
       const headerLines = await sqlDb.query(`
         SELECT 
@@ -543,24 +578,26 @@ class FBL3NManager {
       `);
 
       if (!headerLines || headerLines.length === 0) {
-        return { count: 0, message: 'Aucune facture fournisseur trouvée dans FBL3N pour cette période.' };
+        return {
+          count: 0,
+          message: 'Aucune facture fournisseur trouvée dans FBL3N pour cette période.'
+        };
       }
 
-      // Fetch detail lines for tax computation (TVA 1787, Debours 17300015, Retenue 1971)
-      const docNumbers = Array.from(new Set(headerLines.map(h => `'${h.doc_number}'`))).join(',');
+      const docNumbers = Array.from(new Set(headerLines.map((h) => `'${h.doc_number}'`))).join(',');
       const detailLines = await sqlDb.query(`
         SELECT doc_number, account, amount_local
         FROM FBL3NLineItems
         WHERE doc_number IN (${docNumbers});
       `);
 
-      const taxMap = new Map();
-      detailLines.forEach(d => {
-        const doc = d.doc_number;
+      const taxMap = new Map<string, { tva: number; debours: number; retunie: number }>();
+      detailLines.forEach((d) => {
+        const doc = String(d.doc_number);
         if (!taxMap.has(doc)) {
           taxMap.set(doc, { tva: 0, debours: 0, retunie: 0 });
         }
-        const item = taxMap.get(doc);
+        const item = taxMap.get(doc)!;
         const acc = String(d.account || '');
         const amt = Number(d.amount_local) || 0;
 
@@ -573,7 +610,6 @@ class FBL3NManager {
         }
       });
 
-      const storage = require('./storage');
       let syncedCount = 0;
 
       for (const h of headerLines) {
@@ -583,7 +619,7 @@ class FBL3NManager {
         const taxes = taxMap.get(piece) || { tva: 0, debours: 0, retunie: 0 };
         const rawAmt = Math.abs(Number(h.amount_local) || 0);
 
-        let sId = String(h.supplier_id || '').trim();
+        const sId = String(h.supplier_id || '').trim();
         let sName = 'FOURNISSEUR INCONNU';
         let category = 'Diver';
 
@@ -593,7 +629,9 @@ class FBL3NManager {
           category = existingSup.category || 'PD';
         } else {
           let txt = String(h.text_desc || '').trim();
-          txt = txt.replace(/^(FACTURE|QUITANCE|AVOIR)\s+N[°º\^]?\s*[\w\d\-\/]+\s+/i, '').trim();
+          txt = txt
+            .replace(/^(FACTURE|QUITANCE|AVOIR)\s+N[°º^]?\s*[\w\d\-/]+\s+/i, '')
+            .trim();
           if (txt) {
             sName = txt;
           } else if (sId) {
@@ -617,7 +655,7 @@ class FBL3NManager {
         if (h.posting_date) {
           try {
             dt = new Date(h.posting_date).toISOString().split('T')[0];
-          } catch (e) {
+          } catch {
             dt = `${h.fiscal_year}-${String(h.fiscal_month).padStart(2, '0')}-01`;
           }
         } else {
@@ -626,10 +664,10 @@ class FBL3NManager {
 
         const aff = String(h.reference || h.assignment || '').replace(/'/g, "''");
         const docType = String(h.doc_type || 'KR');
-        const month = parseInt(h.fiscal_month, 10) || 1;
-        const year = parseInt(h.fiscal_year, 10) || 2026;
+        const month = parseInt(String(h.fiscal_month), 10) || 1;
+        const year = parseInt(String(h.fiscal_year), 10) || 2026;
         const curr = String(h.currency_local || 'DZD');
-        const isLoc = (curr === 'DZD' || !curr) ? 1 : 0;
+        const isLoc = curr === 'DZD' || !curr ? 1 : 0;
         const safeSName = sName.replace(/'/g, "''");
 
         await sqlDb.query(`
@@ -657,20 +695,22 @@ class FBL3NManager {
                     source.debours, source.tva, source.retunie, source.net_ht, source.status);
         `);
 
-        // Also sync in-memory storage
         storage.invoices.set(piece, {
           piece,
           affectation: aff,
           docType,
-          supplierId: sId,
-          supplierName: sName,
+          postingKey: String(h.posting_key || '31'),
+          datePiece: dt,
           dateComptable: dt,
-          month,
-          year,
+          month: String(month).padStart(2, '0'),
+          year: String(year),
+          yearMonth: `${year}-${String(month).padStart(2, '0')}`,
           currency: curr,
           isLocal: isLoc === 1,
           f41Amount: rawAmt,
           foreignAmount: null,
+          supplierId: sId,
+          supplierName: sName,
           category,
           debours,
           tva,
@@ -683,13 +723,17 @@ class FBL3NManager {
         syncedCount++;
       }
 
-      console.log(`[FBL3NManager] Successfully synchronized ${syncedCount} vendor invoices from FBL3N into SupplierInvoices.`);
+      console.log(
+        `[FBL3NManager] Successfully synchronized ${syncedCount} vendor invoices from FBL3N into SupplierInvoices.`
+      );
       return { count: syncedCount, success: true };
     } catch (err) {
       console.error('[FBL3NManager] Error synchronizing vendor invoices:', err);
-      return { count: 0, error: err.message, success: false };
+      const message = err instanceof Error ? err.message : String(err);
+      return { count: 0, error: message, success: false };
     }
   }
 }
 
-module.exports = new FBL3NManager();
+const fbl3nManager = new FBL3NManager();
+export default fbl3nManager;

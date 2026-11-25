@@ -1,14 +1,30 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import type {
+  ExpenseCategory,
+  FBL3NPieceSummary,
+  InvoiceRecord,
+  RubriqueConfig
+} from '../types/domain';
 
-const DATA_DIR = path.join(__dirname, 'data');
+const ROOT_DIR = path.resolve(__dirname, '..', '..');
+const DATA_DIR = path.join(ROOT_DIR, 'data');
 const DB_FILE = path.join(DATA_DIR, 'database.json');
-
 const SUPPLIERS_FILE = path.join(DATA_DIR, 'suppliers.json');
 
-const CATEGORIES = ['PD', 'MA', 'MP', 'GD', 'EQUIP', 'PR', 'TE', 'S', 'Diver'];
+export const CATEGORIES: ExpenseCategory[] = [
+  'PD',
+  'MA',
+  'MP',
+  'GD',
+  'EQUIP',
+  'PR',
+  'TE',
+  'S',
+  'Diver'
+];
 
-const RUBRIQUES_CONFIG = [
+export const RUBRIQUES_CONFIG: RubriqueConfig[] = [
   { code: 'PD', label: 'PIECES DETACHEE CPT' },
   { code: 'MA', label: 'MATIERE AUXILIERE' },
   { code: 'MP', label: 'MATIERE PREMIERE' },
@@ -20,67 +36,135 @@ const RUBRIQUES_CONFIG = [
   { code: 'Diver', label: 'DIVERS' }
 ];
 
-const STRATEGIC_SUPPLIERS = [
-  { label: 'SARL SLR', match: s => s.supplierName.toUpperCase().includes('SANITARY') || s.supplierName.toUpperCase().includes('SLR') || s.supplierId === '1010979' },
-  { label: 'SIMONFOND', match: s => s.supplierName.toUpperCase().includes('SIMONFOND') || s.supplierId === '1380763' },
-  { label: 'SENSUS SAS', match: s => s.supplierName.toUpperCase().includes('SENSUS') || s.supplierId === '6640' || s.supplierId === '1011032' },
-  { label: 'ARBURG Gmbh', match: s => s.supplierName.toUpperCase().includes('ARBURG') },
-  { label: 'SAIEG', match: s => s.supplierName.toUpperCase().includes('SAIEG') || s.supplierName.toUpperCase().includes('INDUSTRIES') || s.supplierId === '1012946' },
-  { label: 'ALBIS', match: s => s.supplierName.toUpperCase().includes('ALBIS') || s.supplierId === '1012447' },
-  { label: 'YANDA +JOSTAR', match: s => s.supplierName.toUpperCase().includes('YANDA') || s.supplierName.toUpperCase().includes('JOSTAR') },
-  { label: 'TRANSMARE', match: s => s.supplierName.toUpperCase().includes('TRANSMARE') }
+interface StrategicSupplierRule {
+  label: string;
+  match: (s: { supplierId: string; supplierName: string; totalAmount: number }) => boolean;
+}
+
+const STRATEGIC_SUPPLIERS: StrategicSupplierRule[] = [
+  {
+    label: 'SARL SLR',
+    match: (s) =>
+      s.supplierName.toUpperCase().includes('SANITARY') ||
+      s.supplierName.toUpperCase().includes('SLR') ||
+      s.supplierId === '1010979'
+  },
+  {
+    label: 'SIMONFOND',
+    match: (s) =>
+      s.supplierName.toUpperCase().includes('SIMONFOND') || s.supplierId === '1380763'
+  },
+  {
+    label: 'SENSUS SAS',
+    match: (s) =>
+      s.supplierName.toUpperCase().includes('SENSUS') ||
+      s.supplierId === '6640' ||
+      s.supplierId === '1011032'
+  },
+  {
+    label: 'ARBURG Gmbh',
+    match: (s) => s.supplierName.toUpperCase().includes('ARBURG')
+  },
+  {
+    label: 'SAIEG',
+    match: (s) =>
+      s.supplierName.toUpperCase().includes('SAIEG') ||
+      s.supplierName.toUpperCase().includes('INDUSTRIES') ||
+      s.supplierId === '1012946'
+  },
+  {
+    label: 'ALBIS',
+    match: (s) =>
+      s.supplierName.toUpperCase().includes('ALBIS') || s.supplierId === '1012447'
+  },
+  {
+    label: 'YANDA +JOSTAR',
+    match: (s) =>
+      s.supplierName.toUpperCase().includes('YANDA') ||
+      s.supplierName.toUpperCase().includes('JOSTAR')
+  },
+  {
+    label: 'TRANSMARE',
+    match: (s) => s.supplierName.toUpperCase().includes('TRANSMARE')
+  }
 ];
 
-const DEFAULT_SUPPLIER_RULES = {
-  '1380763': 'PD', // Simonfond s.r.l. (PIECES DETACHEES - PD)
-  '1012447': 'MP', // ALBIS PLASTIQUE FRANCE
-  '1014087': 'MP', // SARL EL WATANIA GLASS
-  '6640': 'PD',    // SENSUS FRANCE S.A.S.
-  '1011032': 'PD', // SENSUS GMBH
-  '1010979': 'PD', // SARL SANITARY LUXE ROBINETTERIE
-  '1012946': 'S',  // SAIEG (Prestations / maintenance)
-  '1009916': 'MA', // SPA GENERAL EMBALLAGE SETIF
-  '1012594': 'S',  // TRANSIT SACI ABDELRAHMAN
-  '1012700': 'S',  // TRANS GLORY
-  '1009816': 'S',  // Douanes d'Alger
-  '200037': 'S',   // douanes de skikda
-  '200032': 'S',   // OFFICE ALGERIEN DE METROLOGIE
-  '200034': 'S',   // ALGERIE TELECOM
-  '200036': 'S',   // CMA CGM SKIKDA
-  '1011978': 'S',  // ENTREPRISE PORTUAIRE DE SKIKDA
-  '1010848': 'Diver', // SARL DJEMILA OFFICE
-  '1013361': 'S',  // SARL BAOSEM
-  '1013757': 'S',  // HOTEL DU LAC VERT
-  '1013786': 'S',  // SARL BAY DIAB HOTEL
-  '1011507': 'S',  // IBIS HOTEL
-  '1013844': 'S'   // Notaire BOUDOUKHA BOUMÉDIÈNE
+const DEFAULT_SUPPLIER_RULES: Record<string, ExpenseCategory> = {
+  '1380763': 'PD',
+  '1012447': 'MP',
+  '1014087': 'MP',
+  '6640': 'PD',
+  '1011032': 'PD',
+  '1010979': 'PD',
+  '1012946': 'S',
+  '1009916': 'MA',
+  '1012594': 'S',
+  '1012700': 'S',
+  '1009816': 'S',
+  '200037': 'S',
+  '200032': 'S',
+  '200034': 'S',
+  '200036': 'S',
+  '1011978': 'S',
+  '1010848': 'Diver',
+  '1013361': 'S',
+  '1013757': 'S',
+  '1013786': 'S',
+  '1011507': 'S',
+  '1013844': 'S'
 };
 
-class Storage {
+export interface StoredSupplier {
+  supplierId: string;
+  supplierName: string;
+  category: string;
+  isFixed: boolean;
+  currency: string;
+  isStrategic: boolean;
+  invoiceCount: number;
+  totalVolume: number;
+  updatedAt?: string;
+}
+
+export interface InvoiceFilterOptions {
+  status?: string;
+  category?: string;
+  market?: string;
+  year?: string;
+  month?: string;
+  supplierId?: string;
+  supplier?: string;
+  onlyMultiCategory?: boolean;
+  search?: string;
+}
+
+export class Storage {
+  public invoices = new Map<string, InvoiceRecord & Record<string, any>>();
+  public deletedPieces = new Set<string>();
+  public suppliers = new Map<string, StoredSupplier>();
+  public supplierRules: Record<string, string> = { ...DEFAULT_SUPPLIER_RULES };
+  public history: Record<string, unknown>[] = [];
+
   constructor() {
-    this.invoices = new Map();
-    this.deletedPieces = new Set();
-    this.suppliers = new Map();
-    this.supplierRules = { ...DEFAULT_SUPPLIER_RULES };
-    this.history = [];
     this.load();
   }
 
-  load() {
+  load(): void {
     try {
       if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
       }
 
-      // Load Suppliers Master
       if (fs.existsSync(SUPPLIERS_FILE)) {
         try {
           const rawSups = fs.readFileSync(SUPPLIERS_FILE, 'utf8');
-          const supsObj = JSON.parse(rawSups);
-          Object.values(supsObj).forEach(s => {
+          const supsObj = JSON.parse(rawSups) as Record<string, StoredSupplier>;
+          Object.values(supsObj).forEach((s) => {
             if (s.supplierId) {
-              // Ensure Simonfond is strictly PD and Fixed
-              if (s.supplierId === '1380763' || (s.supplierName && s.supplierName.toUpperCase().includes('SIMONFOND'))) {
+              if (
+                s.supplierId === '1380763' ||
+                (s.supplierName && s.supplierName.toUpperCase().includes('SIMONFOND'))
+              ) {
                 s.category = 'PD';
                 s.isFixed = true;
               }
@@ -89,24 +173,31 @@ class Storage {
           });
           console.log(`[Storage] Loaded ${this.suppliers.size} suppliers from suppliers master.`);
         } catch (e) {
-          console.error('[Storage] Error loading suppliers.json:', e.message);
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error('[Storage] Error loading suppliers.json:', msg);
         }
       }
 
       if (fs.existsSync(DB_FILE)) {
         const raw = fs.readFileSync(DB_FILE, 'utf8');
-        const data = JSON.parse(raw);
+        const data = JSON.parse(raw) as {
+          invoices?: (InvoiceRecord & Record<string, any>)[];
+          deletedPieces?: string[];
+          supplierRules?: Record<string, string>;
+          history?: Record<string, unknown>[];
+        };
         if (data.invoices && Array.isArray(data.invoices)) {
-          data.invoices.forEach(inv => {
-            // Apply Simonfond fix
-            if (inv.supplierId === '1380763' || (inv.supplierName && inv.supplierName.toUpperCase().includes('SIMONFOND'))) {
+          data.invoices.forEach((inv) => {
+            if (
+              inv.supplierId === '1380763' ||
+              (inv.supplierName && inv.supplierName.toUpperCase().includes('SIMONFOND'))
+            ) {
               inv.category = 'PD';
             }
             this.invoices.set(inv.piece, inv);
             if (inv.isDeleted) {
               this.deletedPieces.add(inv.piece);
             }
-            // Auto-register supplier if missing
             if (inv.supplierId && !this.suppliers.has(inv.supplierId)) {
               this.suppliers.set(inv.supplierId, {
                 supplierId: inv.supplierId,
@@ -122,7 +213,7 @@ class Storage {
           });
         }
         if (data.deletedPieces && Array.isArray(data.deletedPieces)) {
-          data.deletedPieces.forEach(p => this.deletedPieces.add(p));
+          data.deletedPieces.forEach((p) => this.deletedPieces.add(p));
         }
         if (data.supplierRules) {
           this.supplierRules = { ...this.supplierRules, ...data.supplierRules };
@@ -131,14 +222,17 @@ class Storage {
         if (data.history) {
           this.history = data.history;
         }
-        console.log(`Loaded ${this.invoices.size} invoices (${this.deletedPieces.size} marked deleted) from persistent store.`);
+        console.log(
+          `Loaded ${this.invoices.size} invoices (${this.deletedPieces.size} marked deleted) from persistent store.`
+        );
       }
     } catch (err) {
-      console.error('Error loading database:', err.message);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('Error loading database:', msg);
     }
   }
 
-  save() {
+  save(): void {
     try {
       if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -153,30 +247,31 @@ class Storage {
       fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
       this.saveSuppliers();
     } catch (err) {
-      console.error('Error saving database:', err.message);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('Error saving database:', msg);
     }
   }
 
-  saveSuppliers() {
+  saveSuppliers(): void {
     try {
       if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
       }
-      const obj = {};
+      const obj: Record<string, StoredSupplier> = {};
       this.suppliers.forEach((sup, id) => {
         obj[id] = sup;
       });
       fs.writeFileSync(SUPPLIERS_FILE, JSON.stringify(obj, null, 2), 'utf8');
     } catch (err) {
-      console.error('Error saving suppliers:', err.message);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('Error saving suppliers:', msg);
     }
   }
 
-  getSuppliersList() {
+  getSuppliersList(): StoredSupplier[] {
     const list = Array.from(this.suppliers.values());
-    // Recalculate invoice counts & volumes dynamically from current invoices
-    const stats = {};
-    this.invoices.forEach(inv => {
+    const stats: Record<string, { count: number; volume: number }> = {};
+    this.invoices.forEach((inv) => {
       if (inv.isDeleted) return;
       const sid = inv.supplierId;
       if (!sid) return;
@@ -185,7 +280,7 @@ class Storage {
       stats[sid].volume += Math.abs(inv.f41Amount || 0);
     });
 
-    list.forEach(s => {
+    list.forEach((s) => {
       if (stats[s.supplierId]) {
         s.invoiceCount = stats[s.supplierId].count;
         s.totalVolume = stats[s.supplierId].volume;
@@ -195,7 +290,13 @@ class Storage {
     return list.sort((a, b) => (b.totalVolume || 0) - (a.totalVolume || 0));
   }
 
-  updateSupplier({ supplierId, supplierName, category, isFixed }) {
+  updateSupplier(params: {
+    supplierId: string;
+    supplierName?: string;
+    category?: string;
+    isFixed?: boolean;
+  }): { supplier: StoredSupplier; affectedInvoices: number } {
+    const { supplierId, supplierName, category, isFixed } = params;
     if (!supplierId) throw new Error('supplierId is required');
     let sup = this.suppliers.get(String(supplierId));
     if (!sup) {
@@ -217,21 +318,18 @@ class Storage {
       sup.updatedAt = new Date().toISOString();
     }
 
-    // If Simonfond, keep PD strictly
     if (sup.supplierId === '1380763') {
       sup.category = 'PD';
       sup.isFixed = true;
     }
 
-    // Sync supplierRules
     this.supplierRules[supplierId] = sup.category;
 
-    // Propagate to existing invoices if isFixed is true (and invoice was not manually modified by user)
     let affectedCount = 0;
     if (sup.isFixed) {
-      this.invoices.forEach(inv => {
+      this.invoices.forEach((inv) => {
         if (inv.supplierId === supplierId && !inv.isUserModified) {
-          inv.category = sup.category;
+          inv.category = sup!.category;
           inv.updatedAt = new Date().toISOString();
           affectedCount++;
         }
@@ -242,35 +340,77 @@ class Storage {
     return { supplier: sup, affectedInvoices: affectedCount };
   }
 
-  suggestCategory(supplierId, supplierName, glAccounts = []) {
+  suggestCategory(
+    supplierId: string,
+    supplierName: string,
+    glAccounts: string[] = []
+  ): string {
     const sId = String(supplierId || '');
     const sup = this.suppliers.get(sId);
 
-    // 1. If supplier is explicitly FIXED: ALWAYS enforce supplier category!
     if (sup && sup.isFixed && sup.category) {
       return sup.category;
     }
 
-    // 2. Multi-categories / Dynamic mode: Deduce from G/L accounts first!
     if (Array.isArray(glAccounts) && glAccounts.length > 0) {
-      if (glAccounts.some(a => a === '2200010' || a === '21040102' || a.startsWith('21') || a.startsWith('22') || a.startsWith('23'))) {
+      if (
+        glAccounts.some(
+          (a) =>
+            a === '2200010' ||
+            a === '21040102' ||
+            a.startsWith('21') ||
+            a.startsWith('22') ||
+            a.startsWith('23')
+        )
+      ) {
         return 'EQUIP';
       }
-      if (glAccounts.some(a => a === '16010800' || a === '3000005' || a.startsWith('380') || a.startsWith('600'))) {
+      if (
+        glAccounts.some(
+          (a) =>
+            a === '16010800' ||
+            a === '3000005' ||
+            a.startsWith('380') ||
+            a.startsWith('600')
+        )
+      ) {
         return 'MP';
       }
-      if (glAccounts.some(a => a === '3110014' || a.startsWith('381') || a.startsWith('602'))) {
+      if (
+        glAccounts.some(
+          (a) => a === '3110014' || a.startsWith('381') || a.startsWith('602')
+        )
+      ) {
         return 'MA';
       }
-      if (glAccounts.some(a => a === '16000010' || a === '16030110' || a.startsWith('382') || a.startsWith('603'))) {
+      if (
+        glAccounts.some(
+          (a) =>
+            a === '16000010' ||
+            a === '16030110' ||
+            a.startsWith('382') ||
+            a.startsWith('603')
+        )
+      ) {
         return 'PD';
       }
-      if (glAccounts.some(a => a === '16000007' || a.startsWith('40') || a.startsWith('44') || a.startsWith('46') || a.startsWith('61') || a.startsWith('62') || a === '19210000' || a === '19230000')) {
+      if (
+        glAccounts.some(
+          (a) =>
+            a === '16000007' ||
+            a.startsWith('40') ||
+            a.startsWith('44') ||
+            a.startsWith('46') ||
+            a.startsWith('61') ||
+            a.startsWith('62') ||
+            a === '19210000' ||
+            a === '19230000'
+        )
+      ) {
         return 'S';
       }
     }
 
-    // 3. Fallback to supplier category if defined
     if (sup && sup.category) {
       return sup.category;
     }
@@ -278,34 +418,64 @@ class Storage {
       return this.supplierRules[sId];
     }
 
-    // 4. Name heuristics
     const upperName = (supplierName || '').toUpperCase();
-    if (upperName.includes('TRANSIT') || upperName.includes('DOUANE') || upperName.includes('HOTEL') || upperName.includes('PORT') || upperName.includes('TELECOM')) {
+    if (
+      upperName.includes('TRANSIT') ||
+      upperName.includes('DOUANE') ||
+      upperName.includes('HOTEL') ||
+      upperName.includes('PORT') ||
+      upperName.includes('TELECOM')
+    ) {
       return 'S';
     }
     if (upperName.includes('EMBALLAGE') || upperName.includes('CARTON')) {
       return 'MA';
     }
-    if (upperName.includes('OFFICE') || upperName.includes('FOURNITURE') || upperName.includes('BUREAU')) {
+    if (
+      upperName.includes('OFFICE') ||
+      upperName.includes('FOURNITURE') ||
+      upperName.includes('BUREAU')
+    ) {
       return 'Diver';
     }
-    if (upperName.includes('PLAST') || upperName.includes('FONDR') || upperName.includes('METAL') || upperName.includes('VERRE') || upperName.includes('GLASS')) {
+    if (
+      upperName.includes('PLAST') ||
+      upperName.includes('FONDR') ||
+      upperName.includes('METAL') ||
+      upperName.includes('VERRE') ||
+      upperName.includes('GLASS')
+    ) {
       return 'MP';
     }
     return 'Diver';
   }
 
-  importData(f41List, fbl3nMap, sourceName = 'Manual Import') {
+  importData(
+    f41List: InvoiceRecord[],
+    fbl3nMap: Map<string, FBL3NPieceSummary>,
+    sourceName = 'Manual Import'
+  ): {
+    newCount: number;
+    updatedCount: number;
+    previouslyDeletedCount: number;
+    totalCount: number;
+  } {
     let newCount = 0;
     let updatedCount = 0;
     let previouslyDeletedCount = 0;
 
-    f41List.forEach(item => {
+    f41List.forEach((item) => {
       const piece = item.piece;
-      const fbl = fbl3nMap.get(piece) || { debours: 0, retunie: 0, tva: 0, glAccounts: [] };
+      const fbl = fbl3nMap.get(piece) || {
+        debours: 0,
+        retunie: 0,
+        tva: 0,
+        glAccounts: []
+      };
 
       const existing = this.invoices.get(piece);
-      const wasDeletedBefore = this.deletedPieces.has(piece) || (existing && existing.isDeleted);
+      const wasDeletedBefore =
+        this.deletedPieces.has(piece) || (existing && existing.isDeleted);
 
       const debours = fbl.debours || 0;
       const retunie = fbl.retunie || 0;
@@ -332,8 +502,12 @@ class Storage {
         existing.updatedAt = new Date().toISOString();
         updatedCount++;
       } else {
-        const suggestedCat = this.suggestCategory(item.supplierId, item.supplierName, fbl.glAccounts);
-        const newInvoice = {
+        const suggestedCat = this.suggestCategory(
+          item.supplierId,
+          item.supplierName,
+          fbl.glAccounts
+        );
+        const newInvoice: InvoiceRecord & Record<string, any> = {
           piece,
           docType: item.docType,
           postingKey: item.postingKey,
@@ -377,10 +551,15 @@ class Storage {
     });
 
     this.save();
-    return { newCount, updatedCount, previouslyDeletedCount, totalCount: this.invoices.size };
+    return {
+      newCount,
+      updatedCount,
+      previouslyDeletedCount,
+      totalCount: this.invoices.size
+    };
   }
 
-  deleteInvoice(piece) {
+  deleteInvoice(piece: string): (InvoiceRecord & Record<string, any>) | null {
     const inv = this.invoices.get(piece);
     if (!inv) return null;
 
@@ -394,9 +573,9 @@ class Storage {
     return inv;
   }
 
-  deleteInvoicesBulk(pieces = []) {
+  deleteInvoicesBulk(pieces: string[] = []): { count: number } {
     let count = 0;
-    pieces.forEach(p => {
+    pieces.forEach((p) => {
       const inv = this.invoices.get(p);
       if (inv) {
         inv.isDeleted = true;
@@ -411,7 +590,7 @@ class Storage {
     return { count };
   }
 
-  restoreInvoice(piece) {
+  restoreInvoice(piece: string): (InvoiceRecord & Record<string, any>) | null {
     const inv = this.invoices.get(piece);
     if (!inv) return null;
 
@@ -425,7 +604,11 @@ class Storage {
     return inv;
   }
 
-  updateCategory(piece, newCategory, applyToSupplier = false) {
+  updateCategory(
+    piece: string,
+    newCategory: ExpenseCategory,
+    applyToSupplier = false
+  ): (InvoiceRecord & Record<string, any>) | null {
     const inv = this.invoices.get(piece);
     if (!inv) return null;
 
@@ -439,7 +622,7 @@ class Storage {
 
     if (applyToSupplier && inv.supplierId) {
       this.supplierRules[inv.supplierId] = newCategory;
-      this.invoices.forEach(other => {
+      this.invoices.forEach((other) => {
         if (other.supplierId === inv.supplierId && !other.isUserModified) {
           other.category = newCategory;
         }
@@ -450,7 +633,11 @@ class Storage {
     return inv;
   }
 
-  updateSupplierDefaultCategory(supplierId, newCategory, applyToAllInvoices = true) {
+  updateSupplierDefaultCategory(
+    supplierId: string,
+    newCategory: ExpenseCategory,
+    applyToAllInvoices = true
+  ): { supplierId: string; newCategory: ExpenseCategory; updatedCount: number } {
     if (!CATEGORIES.includes(newCategory)) {
       throw new Error(`Catégorie invalide: ${newCategory}`);
     }
@@ -459,7 +646,7 @@ class Storage {
     let updatedCount = 0;
 
     if (applyToAllInvoices) {
-      this.invoices.forEach(inv => {
+      this.invoices.forEach((inv) => {
         if (inv.supplierId === supplierId) {
           inv.category = newCategory;
           inv.isUserModified = true;
@@ -473,10 +660,10 @@ class Storage {
     return { supplierId, newCategory, updatedCount };
   }
 
-  getSuppliers() {
-    const map = new Map();
+  getSuppliers(): Record<string, any>[] {
+    const map = new Map<string, Record<string, any>>();
 
-    this.invoices.forEach(inv => {
+    this.invoices.forEach((inv) => {
       if (inv.isDeleted) return;
       const id = inv.supplierId || 'INCONNU';
       if (!map.has(id)) {
@@ -488,22 +675,23 @@ class Storage {
           totalAmount: 0,
           totalForeignAmount: 0,
           invoiceCount: 0,
-          categories: {},
+          categories: {} as Record<string, number>,
           defaultCategory: this.supplierRules[id] || inv.category
         });
       }
 
-      const s = map.get(id);
+      const s = map.get(id)!;
       s.totalAmount += inv.netHT || 0;
       if (!inv.isLocal && inv.foreignAmount) {
         s.totalForeignAmount = (s.totalForeignAmount || 0) + inv.foreignAmount;
       }
       s.invoiceCount++;
-      s.categories[inv.category] = (s.categories[inv.category] || 0) + 1;
+      const cat = String(inv.category || 'Diver');
+      s.categories[cat] = (s.categories[cat] || 0) + 1;
     });
 
-    const list = Array.from(map.values()).map(s => {
-      const distinctCats = Object.keys(s.categories);
+    const list: Record<string, any>[] = Array.from(map.values()).map((s) => {
+      const distinctCats = Object.keys(s.categories as Record<string, number>);
       return {
         ...s,
         distinctCategories: distinctCats,
@@ -511,50 +699,59 @@ class Storage {
       };
     });
 
-    list.sort((a, b) => b.totalAmount - a.totalAmount);
+    list.sort((a, b) => Number(b.totalAmount) - Number(a.totalAmount));
     return list;
   }
 
-  getInvoices(filters = {}) {
+  getInvoices(filters: InvoiceFilterOptions = {}): (InvoiceRecord & Record<string, any>)[] {
     let list = Array.from(this.invoices.values());
 
     const statusFilter = filters.status || 'ACTIVE';
     if (statusFilter === 'ACTIVE') {
-      list = list.filter(i => !i.isDeleted);
+      list = list.filter((i) => !i.isDeleted);
     } else if (statusFilter === 'DELETED') {
-      list = list.filter(i => i.isDeleted === true);
+      list = list.filter((i) => i.isDeleted === true);
     }
 
     if (filters.category && filters.category !== 'ALL') {
-      list = list.filter(i => i.category === filters.category);
+      list = list.filter((i) => i.category === filters.category);
     }
     if (filters.market && filters.market !== 'ALL') {
       const isLocal = filters.market === 'LOCAL';
-      list = list.filter(i => i.isLocal === isLocal);
+      list = list.filter((i) => i.isLocal === isLocal);
     }
     if (filters.year && filters.year !== 'ALL') {
-      list = list.filter(i => String(i.year) === String(filters.year));
+      list = list.filter((i) => String(i.year) === String(filters.year));
     }
     if (filters.month && filters.month !== 'ALL') {
-      list = list.filter(i => i.month === filters.month);
+      list = list.filter((i) => i.month === filters.month);
     }
     if (filters.supplierId) {
-      list = list.filter(i => i.supplierId === filters.supplierId);
+      list = list.filter((i) => i.supplierId === filters.supplierId);
     }
     if (filters.supplier) {
       const q = filters.supplier.toLowerCase();
-      list = list.filter(i => (i.supplierName && i.supplierName.toLowerCase().includes(q)) || (i.supplierId && i.supplierId.includes(q)));
+      list = list.filter(
+        (i) =>
+          (i.supplierName && i.supplierName.toLowerCase().includes(q)) ||
+          (i.supplierId && i.supplierId.includes(q))
+      );
     }
     if (filters.onlyMultiCategory) {
-      const multiSuppliers = new Set(this.getSuppliers().filter(s => s.hasMultipleCategories).map(s => s.supplierId));
-      list = list.filter(i => multiSuppliers.has(i.supplierId));
+      const multiSuppliers = new Set(
+        this.getSuppliers()
+          .filter((s) => s.hasMultipleCategories)
+          .map((s) => s.supplierId as string)
+      );
+      list = list.filter((i) => multiSuppliers.has(i.supplierId));
     }
     if (filters.search) {
       const q = filters.search.toLowerCase();
-      list = list.filter(i => 
-        i.piece.toLowerCase().includes(q) ||
-        (i.supplierName && i.supplierName.toLowerCase().includes(q)) ||
-        (i.affectation && i.affectation.toLowerCase().includes(q))
+      list = list.filter(
+        (i) =>
+          i.piece.toLowerCase().includes(q) ||
+          (i.supplierName && i.supplierName.toLowerCase().includes(q)) ||
+          (i.affectation && i.affectation.toLowerCase().includes(q))
       );
     }
 
@@ -562,7 +759,7 @@ class Storage {
     return list;
   }
 
-  getDashboardData(filters = {}) {
+  getDashboardData(filters: InvoiceFilterOptions = {}): Record<string, unknown> {
     const list = this.getInvoices({ ...filters, status: 'ACTIVE' });
 
     let totalNetHT = 0;
@@ -576,19 +773,19 @@ class Storage {
     let creditCount = 0;
     let creditAmount = 0;
 
-    const byCategory = {};
-    CATEGORIES.forEach(c => byCategory[c] = { amount: 0, count: 0, percentage: 0 });
+    const byCategory: Record<string, { amount: number; count: number; percentage: number }> = {};
+    CATEGORIES.forEach((c) => (byCategory[c] = { amount: 0, count: 0, percentage: 0 }));
 
     const byMarket = {
       Local: { amount: 0, count: 0, percentage: 0 },
       Etranger: { amount: 0, count: 0, percentage: 0 }
     };
 
-    const bySupplier = {};
-    const byMonth = {};
-    const byYear = {};
+    const bySupplier: Record<string, any> = {};
+    const byMonth: Record<string, { yearMonth: string; amount: number; count: number }> = {};
+    const byYear: Record<string, { year: string; amount: number; count: number }> = {};
 
-    list.forEach(inv => {
+    list.forEach((inv) => {
       const amt = inv.netHT || 0;
       totalNetHT += amt;
       totalF41 += inv.f41Amount || 0;
@@ -604,7 +801,7 @@ class Storage {
         creditAmount += amt;
       }
 
-      const cat = inv.category || 'Diver';
+      const cat = String(inv.category || 'Diver');
       if (!byCategory[cat]) byCategory[cat] = { amount: 0, count: 0, percentage: 0 };
       byCategory[cat].amount += amt;
       byCategory[cat].count++;
@@ -625,7 +822,7 @@ class Storage {
           count: 0,
           isLocal: inv.isLocal,
           currency: inv.currency,
-          categories: new Set()
+          categories: new Set<string>()
         };
       }
       bySupplier[suppId].amount += amt;
@@ -636,7 +833,7 @@ class Storage {
         bySupplier[suppId].foreignAmount += inv.foreignAmount;
       }
       bySupplier[suppId].count++;
-      bySupplier[suppId].categories.add(inv.category);
+      bySupplier[suppId].categories.add(cat);
 
       const ym = inv.yearMonth || `${inv.year}-${inv.month}`;
       if (!byMonth[ym]) byMonth[ym] = { yearMonth: ym, amount: 0, count: 0 };
@@ -658,47 +855,57 @@ class Storage {
     creditAmount = Number(creditAmount.toFixed(2));
 
     if (totalNetHT > 0) {
-      CATEGORIES.forEach(c => {
+      CATEGORIES.forEach((c) => {
         byCategory[c].amount = Number(byCategory[c].amount.toFixed(2));
         byCategory[c].percentage = Number(((byCategory[c].amount / totalNetHT) * 100).toFixed(2));
       });
       byMarket.Local.amount = Number(byMarket.Local.amount.toFixed(2));
       byMarket.Local.percentage = Number(((byMarket.Local.amount / totalNetHT) * 100).toFixed(2));
       byMarket.Etranger.amount = Number(byMarket.Etranger.amount.toFixed(2));
-      byMarket.Etranger.percentage = Number(((byMarket.Etranger.amount / totalNetHT) * 100).toFixed(2));
+      byMarket.Etranger.percentage = Number(
+        ((byMarket.Etranger.amount / totalNetHT) * 100).toFixed(2)
+      );
     }
 
     const topSuppliers = Object.values(bySupplier)
-      .map(s => ({
+      .map((s) => ({
         ...s,
         amount: Number(s.amount.toFixed(2)),
         grossAmount: Number(s.grossAmount.toFixed(2)),
         creditAmount: Number(s.creditAmount.toFixed(2)),
         foreignAmount: Number(s.foreignAmount.toFixed(2)),
-        categories: Array.from(s.categories),
-        hasMultipleCategories: s.categories.size > 1,
+        categories: Array.from(s.categories as Set<string>),
+        hasMultipleCategories: (s.categories as Set<string>).size > 1,
         percentage: totalNetHT > 0 ? Number(((s.amount / totalNetHT) * 100).toFixed(2)) : 0
       }))
       .sort((a, b) => b.amount - a.amount);
 
-    const multiCategorySuppliers = topSuppliers.filter(s => s.hasMultipleCategories);
+    const multiCategorySuppliers = topSuppliers.filter((s) => s.hasMultipleCategories);
     const sortedMonths = Object.values(byMonth)
-      .map(m => ({ ...m, amount: Number(m.amount.toFixed(2)) }))
+      .map((m) => ({ ...m, amount: Number(m.amount.toFixed(2)) }))
       .sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
 
-    const allYears = Array.from(new Set(Array.from(this.invoices.values()).map(i => i.year))).filter(Boolean).sort();
-    const allMonths = Array.from(new Set(Array.from(this.invoices.values()).map(i => i.month))).filter(Boolean).sort();
+    const allYears = Array.from(
+      new Set(Array.from(this.invoices.values()).map((i) => i.year))
+    )
+      .filter(Boolean)
+      .sort();
+    const allMonths = Array.from(
+      new Set(Array.from(this.invoices.values()).map((i) => i.month))
+    )
+      .filter(Boolean)
+      .sort();
 
     const allInvoicesList = Array.from(this.invoices.values());
-    const totalActive = allInvoicesList.filter(i => !i.isDeleted).length;
-    const totalDeleted = allInvoicesList.filter(i => i.isDeleted).length;
+    const totalActive = allInvoicesList.filter((i) => !i.isDeleted).length;
+    const totalDeleted = allInvoicesList.filter((i) => i.isDeleted).length;
 
     const hasActiveFilters = Boolean(
       (filters.year && filters.year !== 'ALL') ||
-      (filters.month && filters.month !== 'ALL') ||
-      (filters.category && filters.category !== 'ALL') ||
-      (filters.market && filters.market !== 'ALL') ||
-      (filters.search && filters.search.trim())
+        (filters.month && filters.month !== 'ALL') ||
+        (filters.category && filters.category !== 'ALL') ||
+        (filters.market && filters.market !== 'ALL') ||
+        (filters.search && filters.search.trim())
     );
 
     return {
@@ -732,23 +939,29 @@ class Storage {
     };
   }
 
-  getManagementReport(filters = {}, unit = 'KDA') {
+  getManagementReport(
+    filters: InvoiceFilterOptions = {},
+    unit = 'KDA'
+  ): Record<string, unknown> {
     const list = this.getInvoices({ ...filters, status: 'ACTIVE' });
     let totalNetHT = 0;
 
-    const byCat = {};
-    CATEGORIES.forEach(c => byCat[c] = 0);
+    const byCat: Record<string, number> = {};
+    CATEGORIES.forEach((c) => (byCat[c] = 0));
 
     let localAmt = 0;
     let etrangerAmt = 0;
 
-    const supplierMap = new Map();
+    const supplierMap = new Map<
+      string,
+      { supplierId: string; supplierName: string; totalAmount: number }
+    >();
 
-    list.forEach(inv => {
+    list.forEach((inv) => {
       const amt = inv.netHT || 0;
       totalNetHT += amt;
 
-      const cat = inv.category || 'Diver';
+      const cat = String(inv.category || 'Diver');
       byCat[cat] = (byCat[cat] || 0) + amt;
 
       if (inv.isLocal) localAmt += amt;
@@ -762,51 +975,49 @@ class Storage {
           totalAmount: 0
         });
       }
-      supplierMap.get(suppId).totalAmount += amt;
+      supplierMap.get(suppId)!.totalAmount += amt;
     });
 
     totalNetHT = Number(totalNetHT.toFixed(2));
-    const divisor = unit === 'KDA' ? 1000 : (unit === 'MDA' ? 1000000 : 1);
+    const divisor = unit === 'KDA' ? 1000 : unit === 'MDA' ? 1000000 : 1;
 
-    // 1. Rubriques Table
-    let rubriquesRawSum = 0;
-    const rubriques = RUBRIQUES_CONFIG.map(r => {
+    const rubriques = RUBRIQUES_CONFIG.map((r) => {
       const rawAmt = byCat[r.code] || 0;
-      rubriquesRawSum += rawAmt;
       const val = Math.round(rawAmt / divisor);
       const ratio = totalNetHT > 0 ? Number(((rawAmt / totalNetHT) * 100).toFixed(2)) : 0;
       return {
         code: r.code,
         label: r.label,
         rawAmount: rawAmt,
-        val: val,
-        ratio: ratio
+        val,
+        ratio
       };
     });
 
-    // 2. Strategic Suppliers Table
     const allSupps = Array.from(supplierMap.values());
-    const matchedIds = new Set();
-    let stratRawSum = 0;
+    const matchedIds = new Set<string>();
 
-    const suppliersTable = STRATEGIC_SUPPLIERS.map(item => {
+    const suppliersTable = STRATEGIC_SUPPLIERS.map((item) => {
       const matched = allSupps.filter(item.match);
-      const amt = matched.reduce((a, s) => { matchedIds.add(s.supplierId); return a + s.totalAmount; }, 0);
-      stratRawSum += amt;
+      const amt = matched.reduce((a, s) => {
+        matchedIds.add(s.supplierId);
+        return a + s.totalAmount;
+      }, 0);
       const val = Math.round(amt / divisor);
       const ratio = totalNetHT > 0 ? Number(((amt / totalNetHT) * 100).toFixed(2)) : 0;
       return {
         label: item.label,
         rawAmount: amt,
-        val: val,
-        ratio: ratio
+        val,
+        ratio
       };
     });
 
-    const othersSupps = allSupps.filter(s => !matchedIds.has(s.supplierId));
+    const othersSupps = allSupps.filter((s) => !matchedIds.has(s.supplierId));
     const othersRawAmt = othersSupps.reduce((a, s) => a + s.totalAmount, 0);
     const othersVal = Math.round(othersRawAmt / divisor);
-    const othersRatio = totalNetHT > 0 ? Number(((othersRawAmt / totalNetHT) * 100).toFixed(2)) : 0;
+    const othersRatio =
+      totalNetHT > 0 ? Number(((othersRawAmt / totalNetHT) * 100).toFixed(2)) : 0;
 
     suppliersTable.push({
       label: 'Autres',
@@ -815,12 +1026,12 @@ class Storage {
       ratio: othersRatio
     });
 
-    // 3. Type Loc / Etranger Table
     const localVal = Math.round(localAmt / divisor);
     const localRatio = totalNetHT > 0 ? Number(((localAmt / totalNetHT) * 100).toFixed(2)) : 0;
 
     const etrangerVal = Math.round(etrangerAmt / divisor);
-    const etrangerRatio = totalNetHT > 0 ? Number(((etrangerAmt / totalNetHT) * 100).toFixed(2)) : 0;
+    const etrangerRatio =
+      totalNetHT > 0 ? Number(((etrangerAmt / totalNetHT) * 100).toFixed(2)) : 0;
 
     const marketsTable = [
       { label: 'Achats locaux', rawAmount: localAmt, val: localVal, ratio: localRatio },
@@ -829,10 +1040,22 @@ class Storage {
 
     const totalVal = Math.round(totalNetHT / divisor);
 
-    // Period label
     let periodLabel = 'Janvier-Septembre 2026';
     if (filters.month && filters.month !== 'ALL') {
-      const monthNames = { '01': 'Janvier', '02': 'Février', '03': 'Mars', '04': 'Avril', '05': 'Mai', '06': 'Juin', '07': 'Juillet', '08': 'Août', '09': 'Septembre', '10': 'Octobre', '11': 'Novembre', '12': 'Décembre' };
+      const monthNames: Record<string, string> = {
+        '01': 'Janvier',
+        '02': 'Février',
+        '03': 'Mars',
+        '04': 'Avril',
+        '05': 'Mai',
+        '06': 'Juin',
+        '07': 'Juillet',
+        '08': 'Août',
+        '09': 'Septembre',
+        '10': 'Octobre',
+        '11': 'Novembre',
+        '12': 'Décembre'
+      };
       periodLabel = `${monthNames[filters.month] || filters.month} ${filters.year || 2026}`;
     } else if (filters.year && filters.year !== 'ALL') {
       periodLabel = `Exercice ${filters.year}`;
@@ -852,4 +1075,5 @@ class Storage {
   }
 }
 
-module.exports = new Storage();
+const storage = new Storage();
+export default storage;

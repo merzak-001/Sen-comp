@@ -1,7 +1,8 @@
-const fs = require('fs');
-const XLSX = require('xlsx');
+import fs from 'fs';
+import * as XLSX from 'xlsx';
+import type { FBL3NPieceSummary, InvoiceRecord } from '../types/domain';
 
-function excelDateToISO(val) {
+function excelDateToISO(val: unknown): string {
   if (!val) return '';
   if (typeof val === 'number') {
     const utcDays = Math.floor(val - 25569);
@@ -20,8 +21,8 @@ function excelDateToISO(val) {
 /**
  * Parse F.41 Excel or MHTML
  */
-function parseF41(filePathOrBuffer) {
-  let workbook;
+export function parseF41(filePathOrBuffer: string | Buffer): InvoiceRecord[] {
+  let workbook: XLSX.WorkBook;
   if (typeof filePathOrBuffer === 'string') {
     workbook = XLSX.readFile(filePathOrBuffer);
   } else {
@@ -30,11 +31,11 @@ function parseF41(filePathOrBuffer) {
 
   const firstSheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[firstSheetName];
-  const rows = XLSX.utils.sheet_to_json(sheet);
+  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
 
-  const invoices = [];
+  const invoices: InvoiceRecord[] = [];
 
-  rows.forEach(r => {
+  rows.forEach((r) => {
     const docType = String(r['Type de pièce'] || '').trim().toUpperCase();
     // Filter only invoice and credit note items (KR, RE, KG, KA if applicable)
     // Focus on KR and RE for expenses
@@ -45,7 +46,7 @@ function parseF41(filePathOrBuffer) {
 
     const postingKey = String(r['Clé comptabilisation'] || '').trim();
     const rawAmount = Number(r['Montant débit/crédit']) || 0;
-    
+
     // In F.41:
     // Posting Key 31 (KR/RE standard) -> negative amount in F.41 -> represents standard expense (+)
     // Posting Key 21 (RE storno / KG avoir) -> positive amount in F.41 -> represents cancellation / credit note (-)
@@ -70,8 +71,12 @@ function parseF41(filePathOrBuffer) {
     const supplierName = String(r['Nom 1'] || 'FOURNISSEUR INCONNU').trim();
     const affectation = String(r['Affectation'] || '').trim();
 
-    const rawForeignAmount = r['Montant dev. étrangère'] !== undefined ? parseFloat(r['Montant dev. étrangère']) : null;
-    const foreignAmount = (rawForeignAmount !== null && !isNaN(rawForeignAmount)) ? -rawForeignAmount : null;
+    const rawForeignAmount =
+      r['Montant dev. étrangère'] !== undefined
+        ? parseFloat(String(r['Montant dev. étrangère']))
+        : null;
+    const foreignAmount =
+      rawForeignAmount !== null && !isNaN(rawForeignAmount) ? -rawForeignAmount : null;
 
     invoices.push({
       piece,
@@ -98,7 +103,7 @@ function parseF41(filePathOrBuffer) {
 /**
  * Fast streaming / regex parser for FBL3N MHTML or Excel file
  */
-function parseFBL3N(filePathOrBuffer) {
+export function parseFBL3N(filePathOrBuffer: string | Buffer): Map<string, FBL3NPieceSummary> {
   let content = '';
   if (typeof filePathOrBuffer === 'string') {
     content = fs.readFileSync(filePathOrBuffer, 'utf8');
@@ -106,20 +111,21 @@ function parseFBL3N(filePathOrBuffer) {
     content = filePathOrBuffer.toString('utf8');
   }
 
-  const pieceMap = new Map();
+  const pieceMap = new Map<string, FBL3NPieceSummary>();
 
   // If it's an MHTML / HTML file
   if (content.includes('<html') || content.includes('<table') || content.includes('MIME-Version')) {
     const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
     const tdRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
 
-    let trMatch;
+    let trMatch: RegExpExecArray | null;
     let headerFound = false;
 
     while ((trMatch = trRegex.exec(content)) !== null) {
       const rowHtml = trMatch[1];
-      const cells = [];
-      let tdMatch;
+      const cells: string[] = [];
+      let tdMatch: RegExpExecArray | null;
+      tdRegex.lastIndex = 0;
       while ((tdMatch = tdRegex.exec(rowHtml)) !== null) {
         cells.push(tdMatch[1].replace(/<[^>]+>/g, '').trim());
       }
@@ -149,7 +155,7 @@ function parseFBL3N(filePathOrBuffer) {
         });
       }
 
-      const entry = pieceMap.get(piece);
+      const entry = pieceMap.get(piece)!;
       if (!entry.glAccounts.includes(compte)) {
         entry.glAccounts.push(compte);
       }
@@ -170,8 +176,8 @@ function parseFBL3N(filePathOrBuffer) {
   } else {
     // Fallback if provided as binary .xlsx
     const wb = XLSX.read(filePathOrBuffer);
-    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-    rows.forEach(r => {
+    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[wb.SheetNames[0]]);
+    rows.forEach((r) => {
       const piece = String(r['Nº pièce'] || '').trim();
       const compte = String(r['Compte'] || '').trim();
       const amount = Number(r['Montant en devise interne']) || 0;
@@ -180,7 +186,7 @@ function parseFBL3N(filePathOrBuffer) {
       if (!pieceMap.has(piece)) {
         pieceMap.set(piece, { debours: 0, retunie: 0, tva: 0, glAccounts: [] });
       }
-      const entry = pieceMap.get(piece);
+      const entry = pieceMap.get(piece)!;
       if (!entry.glAccounts.includes(compte)) entry.glAccounts.push(compte);
 
       if (compte === '17300015' && amount > 0) entry.debours += amount;
@@ -191,8 +197,3 @@ function parseFBL3N(filePathOrBuffer) {
 
   return pieceMap;
 }
-
-module.exports = {
-  parseF41,
-  parseFBL3N
-};

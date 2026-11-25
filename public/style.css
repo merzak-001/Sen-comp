@@ -167,6 +167,7 @@ body {
   justify-content: center;
 }
 
+.app-layout.sidebar-collapsed .nav-section-label,
 .app-layout.sidebar-collapsed .brand-logo-box,
 .app-layout.sidebar-collapsed .brand-info,
 .app-layout.sidebar-collapsed .nav-label,
@@ -250,12 +251,26 @@ body {
 }
 
 .sidebar-nav {
-  padding: 16px 12px;
+  padding: 12px 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   flex: 1;
   overflow-y: auto;
+}
+
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  padding: 10px 12px 4px;
+  user-select: none;
+}
+
+.nav-section-label:first-child {
+  padding-top: 2px;
 }
 
 .nav-item {
@@ -442,7 +457,7 @@ body {
 }
 
 .topbar {
-  padding: 14px 28px;
+  padding: 10px 22px;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -452,7 +467,7 @@ body {
   align-items: center;
   flex-shrink: 0;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 10px;
   box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
   z-index: 10;
 }
@@ -3629,4 +3644,16 @@ input[type="text"]:focus, select:focus {
   background: rgba(56, 189, 248, 0.15);
   border-color: #38bdf8;
   color: #38bdf8;
+}
+
+@media (max-width: 1180px) {
+  .topbar {
+    padding: 10px 16px;
+  }
+  .topbar-left {
+    width: 100%;
+  }
+  .executive-controls-group {
+    gap: 6px;
+  }
 }

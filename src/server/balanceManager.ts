@@ -1,19 +1,35 @@
-const fs = require('fs');
-const path = require('path');
-const XLSX = require('xlsx');
-const sqlDb = require('./sqlDb');
-const SpreadsheetReader = require('./spreadsheetReader');
+import fs from 'fs';
+import path from 'path';
+import sqlDb from './sqlDb';
+import SpreadsheetReader from './spreadsheetReader';
 
-class BalanceManager {
-  constructor() {
-    this.osApproDir = 'C:/Users/msai/OneDrive - Sensus Germany GmbH & Co. KG/Documents/OS-appro';
-  }
+export interface ParsedBalanceRecord {
+  period_key: string;
+  boal_account: string;
+  account_desc: string;
+  report_initial: number;
+  debit: number;
+  credit: number;
+  solde: number;
+  source_file: string;
+}
+
+export interface ParsedBalanceFileResult {
+  periodKey: string;
+  fileName: string;
+  totalRecords: number;
+  records: ParsedBalanceRecord[];
+}
+
+export class BalanceManager {
+  public osApproDir =
+    'C:/Users/msai/OneDrive - Sensus Germany GmbH & Co. KG/Documents/OS-appro';
 
   /**
    * Parse numeric values from various SAP balance representations
    * Supports: 12345.67, ' 36 265 462.34 ', ' (112 461 223.05)', ' - ', '12.345,67'
    */
-  parseAmount(val) {
+  parseAmount(val: unknown): number {
     if (val === null || val === undefined) return 0;
     if (typeof val === 'number') return isNaN(val) ? 0 : Math.round(val * 100) / 100;
 
@@ -58,24 +74,28 @@ class BalanceManager {
    * Prioritizes SAP RFSSLD00 header rows (e.g. "Périodes reporting 04-04 2025" -> "042025")
    * and filename patterns (e.g. "balance 04.2025.xls" -> "042025").
    */
-  detectPeriodKey(filePath, fileRows = []) {
+  detectPeriodKey(filePath: string, fileRows: unknown[][] = []): string {
     const base = path.basename(filePath).toLowerCase();
 
     // 1. Inspect first 12 rows for SAP RFSSLD00 period strings
     for (let i = 0; i < Math.min(12, fileRows.length); i++) {
-      const line = Array.isArray(fileRows[i]) ? fileRows[i].join(' ') : String(fileRows[i] || '');
+      const line = Array.isArray(fileRows[i])
+        ? fileRows[i].join(' ')
+        : String(fileRows[i] || '');
 
       // Matches "Périodes reporting 04-04 2025" or "Périodes reporting 12-16 2025"
-      const pMatch = line.match(/P[ée]riodes reporting\s*(\d{1,2})\s*-\s*(\d{1,2})\s+(\d{4})/i);
+      const pMatch = line.match(
+        /P[ée]riodes reporting\s*(\d{1,2})\s*-\s*(\d{1,2})\s+(\d{4})/i
+      );
       if (pMatch) {
         const startMonth = String(pMatch[1]).padStart(2, '0');
         const year = pMatch[3];
-        return `${startMonth}${year}`; // e.g. "042025", "102026", "122025"
+        return `${startMonth}${year}`;
       }
     }
 
     // 2. Check filename with explicit month and year (e.g. "balance 04.2025.xls", "balance 01-2025.xls")
-    const mDot = base.match(/balance\s*(\d{1,2})[\.\-_](\d{4})/i);
+    const mDot = base.match(/balance\s*(\d{1,2})[.\-_](\d{4})/i);
     if (mDot) {
       const month = String(mDot[1]).padStart(2, '0');
       const year = mDot[2];
@@ -97,7 +117,9 @@ class BalanceManager {
 
     // 5. Check any year in header rows as fallback
     for (let i = 0; i < Math.min(10, fileRows.length); i++) {
-      const line = Array.isArray(fileRows[i]) ? fileRows[i].join(' ') : String(fileRows[i] || '');
+      const line = Array.isArray(fileRows[i])
+        ? fileRows[i].join(' ')
+        : String(fileRows[i] || '');
       const yMatch = line.match(/\b(202\d)\b/);
       if (yMatch) return yMatch[1];
     }
@@ -108,7 +130,10 @@ class BalanceManager {
   /**
    * Parse any SAP Balance file (RFSSLD00 or tabular)
    */
-  async parseBalanceFile(filePath, periodOverride = null) {
+  async parseBalanceFile(
+    filePath: string,
+    periodOverride: string | null = null
+  ): Promise<ParsedBalanceFileResult> {
     if (!fs.existsSync(filePath)) {
       throw new Error(`Fichier introuvable : ${filePath}`);
     }
@@ -136,21 +161,39 @@ class BalanceManager {
       const row = rawRows[r];
       if (!row || !Array.isArray(row) || row.length === 0) continue;
 
-      const strRow = Array.from({ length: row.length }, (_, i) => String(row[i] || '').toLowerCase().trim());
+      const strRow = Array.from({ length: row.length }, (_, i) =>
+        String(row[i] || '')
+          .toLowerCase()
+          .trim()
+      );
 
-      const acctIdx = strRow.findIndex(c => c && (c.includes('cpte gén') || c === 'compte' || c.includes('account')));
-      const descIdx = strRow.findIndex(c => c && (c.includes('désignation') || c.includes('designation') || c.includes('libellé') || c.includes('intitulé')));
-      const soldeIdx = strRow.findIndex(c => c && (c.includes('solde cum') || c === 'solde' || c.includes('balance')));
+      const acctIdx = strRow.findIndex(
+        (c) => c && (c.includes('cpte gén') || c === 'compte' || c.includes('account'))
+      );
+      const descIdx = strRow.findIndex(
+        (c) =>
+          c &&
+          (c.includes('désignation') ||
+            c.includes('designation') ||
+            c.includes('libellé') ||
+            c.includes('intitulé'))
+      );
+      const soldeIdx = strRow.findIndex(
+        (c) => c && (c.includes('solde cum') || c === 'solde' || c.includes('balance'))
+      );
 
       if (acctIdx !== -1 && (descIdx !== -1 || soldeIdx !== -1)) {
         headerRowIdx = r;
         colMap.account = acctIdx;
         colMap.desc = descIdx !== -1 ? descIdx : acctIdx + 1;
 
-        // Find financial columns
         for (let c = 0; c < strRow.length; c++) {
           const val = strRow[c] || '';
-          if (val.includes('report de solde') || val.includes('report initial') || val.includes('opening')) {
+          if (
+            val.includes('report de solde') ||
+            val.includes('report initial') ||
+            val.includes('opening')
+          ) {
             colMap.report = c;
           } else if (val.includes('débit') || val.includes('debit')) {
             colMap.debit = c;
@@ -164,14 +207,12 @@ class BalanceManager {
       }
     }
 
-    // Fallback if header not detected automatically
     if (headerRowIdx === -1) {
-      // Check if format 2: row 0 is header
       headerRowIdx = 0;
       colMap = { account: 0, desc: 1, report: 2, debit: 3, credit: 4, solde: 5 };
     }
 
-    const parsedRecords = [];
+    const parsedRecords: ParsedBalanceRecord[] = [];
     for (let r = headerRowIdx + 1; r < rawRows.length; r++) {
       const row = rawRows[r];
       if (!row || row.length === 0) continue;
@@ -180,23 +221,26 @@ class BalanceManager {
       if (rawAcct === null || rawAcct === undefined) continue;
 
       const acctStr = String(rawAcct).trim();
-      // Filter out total/subtotal lines or non-account strings
       if (!/^\d{4,12}$/.test(acctStr)) continue;
 
-      const desc = colMap.desc !== -1 && row[colMap.desc] ? String(row[colMap.desc]).trim() : '';
+      const desc =
+        colMap.desc !== -1 && row[colMap.desc] ? String(row[colMap.desc]).trim() : '';
       const report = colMap.report !== -1 ? this.parseAmount(row[colMap.report]) : 0;
       const debit = colMap.debit !== -1 ? this.parseAmount(row[colMap.debit]) : 0;
       const credit = colMap.credit !== -1 ? this.parseAmount(row[colMap.credit]) : 0;
-      const solde = colMap.solde !== -1 ? this.parseAmount(row[colMap.solde]) : (report + debit - credit);
+      const solde =
+        colMap.solde !== -1
+          ? this.parseAmount(row[colMap.solde])
+          : report + debit - credit;
 
       parsedRecords.push({
         period_key: detectedPeriod,
         boal_account: acctStr,
         account_desc: desc,
         report_initial: report,
-        debit: debit,
-        credit: credit,
-        solde: solde,
+        debit,
+        credit,
+        solde,
         source_file: path.basename(filePath)
       });
     }
@@ -212,22 +256,27 @@ class BalanceManager {
   /**
    * Save / Upsert parsed balance records into SQL Server
    */
-  async saveBalanceToDb(records, periodKey, sourceFileName) {
+  async saveBalanceToDb(
+    records: ParsedBalanceRecord[],
+    periodKey: string,
+    sourceFileName: string
+  ): Promise<{ success: boolean; count: number; periodKey?: string }> {
     if (!records || records.length === 0) {
       return { success: true, count: 0 };
     }
 
-    // Batch process in chunks of 50 to optimize network / query execution
     const CHUNK_SIZE = 50;
     let totalUpserted = 0;
 
     for (let i = 0; i < records.length; i += CHUNK_SIZE) {
       const chunk = records.slice(i, i + CHUNK_SIZE);
-      const valuesClause = chunk.map(r => {
-        const safeDesc = (r.account_desc || '').replace(/'/g, "''");
-        const safeSource = (sourceFileName || r.source_file || '').replace(/'/g, "''");
-        return `SELECT '${periodKey}' AS period_key, '${r.boal_account}' AS boal_account, N'${safeDesc}' AS account_desc, ${r.report_initial} AS report_initial, ${r.debit} AS debit, ${r.credit} AS credit, ${r.solde} AS solde, N'${safeSource}' AS source_file`;
-      }).join(' UNION ALL ');
+      const valuesClause = chunk
+        .map((r) => {
+          const safeDesc = (r.account_desc || '').replace(/'/g, "''");
+          const safeSource = (sourceFileName || r.source_file || '').replace(/'/g, "''");
+          return `SELECT '${periodKey}' AS period_key, '${r.boal_account}' AS boal_account, N'${safeDesc}' AS account_desc, ${r.report_initial} AS report_initial, ${r.debit} AS debit, ${r.credit} AS credit, ${r.solde} AS solde, N'${safeSource}' AS source_file`;
+        })
+        .join(' UNION ALL ');
 
       const mergeSql = `
         MERGE GeneralLedgerBalances AS target
@@ -263,14 +312,17 @@ class BalanceManager {
   /**
    * 1-Click Import of all balance files from OS-appro folder
    */
-  async importFromOSAppro() {
-    const results = [];
+  async importFromOSAppro(): Promise<Record<string, unknown>[]> {
+    const results: Record<string, unknown>[] = [];
     if (!fs.existsSync(this.osApproDir)) {
       throw new Error(`Dossier OS-appro introuvable: ${this.osApproDir}`);
     }
 
     const files = fs.readdirSync(this.osApproDir);
-    const balanceFiles = files.filter(f => f.toLowerCase().includes('balance') && (f.endsWith('.xls') || f.endsWith('.xlsx')));
+    const balanceFiles = files.filter(
+      (f) =>
+        f.toLowerCase().includes('balance') && (f.endsWith('.xls') || f.endsWith('.xlsx'))
+    );
 
     for (const f of balanceFiles) {
       const fullPath = path.join(this.osApproDir, f);
@@ -286,10 +338,11 @@ class BalanceManager {
           success: true
         });
       } catch (err) {
-        console.error(`[BalanceManager] Error importing ${f}:`, err.message);
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`[BalanceManager] Error importing ${f}:`, message);
         results.push({
           file: f,
-          error: err.message,
+          error: message,
           success: false
         });
       }
@@ -301,8 +354,8 @@ class BalanceManager {
   /**
    * Get Periods Summary and Trial Balance Equality check
    */
-  async getPeriodsSummary() {
-    const sql = `
+  async getPeriodsSummary(): Promise<Record<string, unknown>[]> {
+    const sqlText = `
       SELECT 
         period_key,
         COUNT(*) AS total_accounts,
@@ -316,9 +369,9 @@ class BalanceManager {
       GROUP BY period_key
       ORDER BY period_key DESC
     `;
-    const rows = await sqlDb.query(sql);
+    const rows = await sqlDb.query(sqlText);
 
-    return rows.map(r => {
+    return rows.map((r) => {
       const totDeb = Number(r.total_debit) || 0;
       const totCred = Number(r.total_credit) || 0;
       const diffDebCred = Math.abs(totDeb - totCred);
@@ -342,7 +395,11 @@ class BalanceManager {
   /**
    * Get balance rows with optional filtering by class and text search
    */
-  async getBalances(periodKey, filterClass = null, search = null) {
+  async getBalances(
+    periodKey: string,
+    filterClass: string | null = null,
+    search: string | null = null
+  ): Promise<Record<string, unknown>[]> {
     let where = `WHERE period_key = '${periodKey.replace(/'/g, "''")}'`;
 
     if (filterClass) {
@@ -355,7 +412,7 @@ class BalanceManager {
       where += ` AND (boal_account LIKE '%${s}%' OR scf_account LIKE '%${s}%' OR account_desc LIKE '%${s}%')`;
     }
 
-    const sql = `
+    const sqlText = `
       SELECT 
         id, period_key, boal_account, scf_account, account_desc,
         report_initial, debit, credit, solde, source_file, updated_at
@@ -364,19 +421,19 @@ class BalanceManager {
       ORDER BY boal_account ASC
     `;
 
-    const rows = await sqlDb.query(sql);
-    return rows;
+    return await sqlDb.query(sqlText);
   }
 
   /**
    * Delete all balance lines for a specific period
    */
-  async deletePeriod(periodKey) {
+  async deletePeriod(periodKey: string): Promise<{ success: boolean; periodKey: string }> {
     if (!periodKey) throw new Error('periodKey obligatoire');
-    const sql = `DELETE FROM GeneralLedgerBalances WHERE period_key = '${periodKey.replace(/'/g, "''")}'`;
-    await sqlDb.query(sql);
+    const sqlText = `DELETE FROM GeneralLedgerBalances WHERE period_key = '${periodKey.replace(/'/g, "''")}'`;
+    await sqlDb.query(sqlText);
     return { success: true, periodKey };
   }
 }
 
-module.exports = new BalanceManager();
+const balanceManager = new BalanceManager();
+export default balanceManager;

@@ -4,7 +4,9 @@
 // A4 PRINTABLE DOSSIER & REACTIVE SAP DATA FILTERS
 // ==========================================================================
 
-const MONTH_NAMES = {
+import type { AuthUser, ClientAppState } from './types';
+
+const MONTH_NAMES: Record<string, string> = {
   'ALL': 'Cumul annuel (Tous les mois)',
   '1': '01 - Janvier',
   '2': '02 - Février',
@@ -43,7 +45,7 @@ const MONTH_SELECT_IDS = [
 ];
 
 // Global Application State
-const AppState = {
+const AppState: ClientAppState = {
   unit: localStorage.getItem('sensus_unit') || 'KDA', // Default is KDA
   period: 'AOUT_2026',
   selectedYear: localStorage.getItem('sensus_year') || '2025',
@@ -87,9 +89,9 @@ const AppState = {
 // ==========================================================================
 // 0. AUTHENTICATION & ACCESS CONTROL
 // ==========================================================================
-let currentUser = null;
+let currentUser: AuthUser | null = null;
 
-function getStoredUser() {
+function getStoredUser(): AuthUser | null {
   try {
     const raw = localStorage.getItem('sensus_auth_user');
     return raw ? JSON.parse(raw) : null;
@@ -423,12 +425,12 @@ async function loadAvailableYears() {
   // Always default to the most recent year with data, or the latest available year
   if (AppState.activeDataYears && AppState.activeDataYears.length > 0) {
     // Sort descending to ensure latest year is first
-    AppState.activeDataYears.sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
-    AppState.selectedYear = AppState.activeDataYears[0];
+    AppState.activeDataYears.sort((a, b) => parseInt(String(b), 10) - parseInt(String(a), 10));
+    AppState.selectedYear = String(AppState.activeDataYears[0]);
     localStorage.setItem('sensus_year', AppState.selectedYear);
   } else if (AppState.availableYears && AppState.availableYears.length > 0) {
-    AppState.availableYears.sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
-    AppState.selectedYear = AppState.availableYears[0];
+    AppState.availableYears.sort((a, b) => parseInt(String(b), 10) - parseInt(String(a), 10));
+    AppState.selectedYear = String(AppState.availableYears[0]);
     localStorage.setItem('sensus_year', AppState.selectedYear);
   }
 
@@ -646,9 +648,9 @@ function getPageIdFromRoute(route) {
     'parametres': 'page-parametres',
     'page-parametres': 'page-parametres',
     'settings': 'page-parametres',
-    'import': 'page-import',
-    'page-import': 'page-import',
-    'rapprochement': 'page-import'
+    'import': 'page-parametres',
+    'page-import': 'page-parametres',
+    'rapprochement': 'page-parametres'
   };
   return map[clean] || 'page-doc9';
 }
@@ -734,8 +736,8 @@ const PAGE_HEADERS = {
     showPeriod: false
   },
   'page-parametres': {
-    title: "Paramètres & Importation des Données SAP",
-    sub: "Alimentation directe de la base de données SQL Server (Grand Livre FBL3N & Balances) • Remplacement intelligent et réconciliation",
+    title: "Importation des Données",
+    sub: "Grand Livre (FBL3N) & Balance Générale",
     showPeriod: false
   }
 };
@@ -768,7 +770,7 @@ function navigateToPage(targetPageId, updateHash = true) {
   });
 
   // Handle dropdown parent state
-  const isFinancier = targetPageId === 'page-bilan' || targetPageId === 'page-tcr' || targetPageId === 'page-balance' || targetPageId === 'page-tft';
+  const isFinancier = targetPageId === 'page-bilan' || targetPageId === 'page-tcr' || targetPageId === 'page-balance' || targetPageId === 'page-tft' || targetPageId === 'page-fbl3n';
   const dropdownFin = document.getElementById('dropdownFinanciers');
   if (dropdownFin) {
     if (isFinancier) {
@@ -792,6 +794,22 @@ function navigateToPage(targetPageId, updateHash = true) {
       topbarPeriodBox.style.display = PAGE_HEADERS[targetPageId].showPeriod ? 'block' : 'none';
     }
   }
+
+  // Hide global filters on Import/Parametres page
+  const isImportPage = targetPageId === 'page-parametres';
+  const topbarYearBox = document.getElementById('topbarYearBox');
+  const topbarMonthBox = document.getElementById('topbarMonthBox');
+  const unitPillBox = document.querySelector('.unit-pill-box') as HTMLElement | null;
+  if (topbarYearBox) topbarYearBox.style.display = isImportPage ? 'none' : 'inline-flex';
+  if (topbarMonthBox) topbarMonthBox.style.display = isImportPage ? 'none' : 'inline-flex';
+  if (unitPillBox) unitPillBox.style.display = isImportPage ? 'none' : 'inline-flex';
+
+  // Show print/word export buttons only on relevant report pages
+  const btnPrint = document.getElementById('btnPrintReport');
+  const btnWord = document.getElementById('btnDownloadWord');
+  const printablePages = ['page-doc9', 'page-bilan', 'page-tcr', 'page-tft'];
+  if (btnPrint) btnPrint.style.display = printablePages.includes(targetPageId) ? 'inline-flex' : 'none';
+  if (btnWord) btnWord.style.display = targetPageId === 'page-doc9' ? 'inline-flex' : 'none';
 
   // Load data for the active page
   if (targetPageId === 'page-doc9') {
@@ -1965,9 +1983,9 @@ async function loadSuppliersPage(forceRefresh = false) {
     const elFixed = document.getElementById('kpiFixedSuppliers');
     const elMulti = document.getElementById('kpiMultiSuppliers');
 
-    if (elTotal) elTotal.textContent = total;
-    if (elFixed) elFixed.textContent = fixed;
-    if (elMulti) elMulti.textContent = multi;
+    if (elTotal) elTotal.textContent = String(total);
+    if (elFixed) elFixed.textContent = String(fixed);
+    if (elMulti) elMulti.textContent = String(multi);
 
     applySuppliersFilter();
   } catch (err) {
@@ -4504,7 +4522,7 @@ function initFBL3NControls() {
         const formData = new FormData();
         formData.append('file', fbl3nSelectedUploadFile);
         formData.append('importMode', importMode);
-        formData.append('clearExisting', clearExisting);
+        formData.append('clearExisting', String(clearExisting));
 
         const res = await fetch('/api/fbl3n/upload', {
           method: 'POST',
@@ -5186,7 +5204,137 @@ function formatFileSize(bytes) {
 }
 
 function initImportPage() {
-  // On-demand reconciliation controls (only loads/shows when requested)
+  const tabFbl3n = document.getElementById('tabImportFBL3N');
+  const tabBalance = document.getElementById('tabImportBalance');
+  const panelFbl3n = document.getElementById('panelImportFBL3N');
+  const panelBalance = document.getElementById('panelImportBalance');
+
+  if (tabFbl3n && tabBalance && panelFbl3n && panelBalance) {
+    tabFbl3n.addEventListener('click', () => {
+      panelFbl3n.style.display = 'block';
+      panelBalance.style.display = 'none';
+      tabFbl3n.className = 'btn btn-primary btn-sm';
+      tabFbl3n.style.border = '';
+      tabFbl3n.style.background = '';
+      tabBalance.className = 'btn btn-outline btn-sm';
+      tabBalance.style.border = 'none';
+      tabBalance.style.background = 'transparent';
+    });
+    tabBalance.addEventListener('click', () => {
+      panelFbl3n.style.display = 'none';
+      panelBalance.style.display = 'block';
+      tabBalance.className = 'btn btn-emerald btn-sm';
+      tabBalance.style.border = '';
+      tabBalance.style.background = '';
+      tabFbl3n.className = 'btn btn-outline btn-sm';
+      tabFbl3n.style.border = 'none';
+      tabFbl3n.style.background = 'transparent';
+    });
+  }
+
+  const fileInputFbl3n = document.getElementById('fileInputFBL3N') as HTMLInputElement | null;
+  const btnUploadFbl3n = document.getElementById('btnUploadFBL3N') as HTMLButtonElement | null;
+  const fbl3nFeedback = document.getElementById('fbl3nUploadFeedback');
+
+  if (fileInputFbl3n && btnUploadFbl3n) {
+    fileInputFbl3n.addEventListener('change', () => {
+      const hasFiles = Boolean(fileInputFbl3n.files && fileInputFbl3n.files.length > 0);
+      btnUploadFbl3n.disabled = !hasFiles;
+      if (fbl3nFeedback) fbl3nFeedback.textContent = '';
+    });
+
+    btnUploadFbl3n.addEventListener('click', async () => {
+      if (!fileInputFbl3n.files || fileInputFbl3n.files.length === 0) return;
+      const files = Array.from(fileInputFbl3n.files);
+      btnUploadFbl3n.disabled = true;
+      const txtEl = document.getElementById('btnTextUploadFBL3N');
+      if (txtEl) txtEl.textContent = 'Importation...';
+      if (fbl3nFeedback) fbl3nFeedback.textContent = '';
+
+      try {
+        const formData = new FormData();
+        files.forEach((f) => formData.append('files', f));
+        formData.append('importMode', 'month');
+        const res = await fetch('/api/upload/fbl3n', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) {
+          fileInputFbl3n.value = '';
+          if (fbl3nFeedback) {
+            fbl3nFeedback.style.color = '#059669';
+            fbl3nFeedback.textContent = `✓ ${Number(data.totalInserted || 0).toLocaleString('fr-FR')} écritures importées.`;
+          }
+          await loadImportSummary();
+          await loadAvailableYears();
+        } else {
+          if (fbl3nFeedback) {
+            fbl3nFeedback.style.color = '#e11d48';
+            fbl3nFeedback.textContent = data.error || "Erreur lors de l'importation.";
+          }
+        }
+      } catch (err) {
+        if (fbl3nFeedback) {
+          fbl3nFeedback.style.color = '#e11d48';
+          fbl3nFeedback.textContent = err.message || 'Erreur réseau.';
+        }
+      } finally {
+        if (txtEl) txtEl.textContent = 'Importer';
+        btnUploadFbl3n.disabled = !(fileInputFbl3n.files && fileInputFbl3n.files.length > 0);
+      }
+    });
+  }
+
+  const fileInputBal = document.getElementById('fileInputBalance') as HTMLInputElement | null;
+  const btnUploadBal = document.getElementById('btnUploadBalance') as HTMLButtonElement | null;
+  const balFeedback = document.getElementById('balanceUploadFeedback');
+
+  if (fileInputBal && btnUploadBal) {
+    fileInputBal.addEventListener('change', () => {
+      const hasFiles = Boolean(fileInputBal.files && fileInputBal.files.length > 0);
+      btnUploadBal.disabled = !hasFiles;
+      if (balFeedback) balFeedback.textContent = '';
+    });
+
+    btnUploadBal.addEventListener('click', async () => {
+      if (!fileInputBal.files || fileInputBal.files.length === 0) return;
+      const files = Array.from(fileInputBal.files);
+      btnUploadBal.disabled = true;
+      const txtEl = document.getElementById('btnTextUploadBalance');
+      if (txtEl) txtEl.textContent = 'Importation...';
+      if (balFeedback) balFeedback.textContent = '';
+
+      try {
+        const formData = new FormData();
+        files.forEach((f) => formData.append('files', f));
+        const res = await fetch('/api/upload/balance', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) {
+          fileInputBal.value = '';
+          if (balFeedback) {
+            balFeedback.style.color = '#059669';
+            balFeedback.textContent = `✓ ${Number(data.totalInserted || 0).toLocaleString('fr-FR')} comptes importés.`;
+          }
+          await loadImportSummary();
+          await loadAvailableYears();
+        } else {
+          if (balFeedback) {
+            balFeedback.style.color = '#e11d48';
+            balFeedback.textContent = data.error || "Erreur lors de l'importation.";
+          }
+        }
+      } catch (err) {
+        if (balFeedback) {
+          balFeedback.style.color = '#e11d48';
+          balFeedback.textContent = err.message || 'Erreur réseau.';
+        }
+      } finally {
+        if (txtEl) txtEl.textContent = 'Importer';
+        btnUploadBal.disabled = !(fileInputBal.files && fileInputBal.files.length > 0);
+      }
+    });
+  }
+
+  return;
+  // Legacy reconciliation controls below (no-op)
   const btnLaunchReconcile = document.getElementById('btnLaunchReconciliation');
   const wrapReconcileResults = document.getElementById('wrapReconciliationResults');
   const btnHideReconcile = document.getElementById('btnHideReconciliation');
@@ -5240,7 +5388,7 @@ function initImportPage() {
       const sel = document.getElementById('selectDeleteGLPeriod')?.value;
       if (!sel) return;
 
-      let payload = { target: 'fbl3n' };
+      const payload: Record<string, any> = { target: 'fbl3n' };
       let confirmMsg = '';
 
       if (sel === 'ALL') {
@@ -5373,7 +5521,7 @@ function initImportPage() {
       const sel = document.getElementById('selectDeleteBalancePeriod')?.value;
       if (!sel) return;
 
-      let payload = { target: 'balance' };
+      const payload: Record<string, any> = { target: 'balance' };
       let confirmMsg = '';
 
       if (sel === 'ALL') {
@@ -5830,57 +5978,112 @@ async function loadImportSummary() {
     const res = await fetch('/api/import/summary');
     const data = await res.json();
     if (data.success) {
-      // FBL3N summary
-      const glEl = document.getElementById('textFBL3NSummary');
-      const selectDeleteGL = document.getElementById('selectDeleteGLPeriod');
-      if (selectDeleteGL) {
-        selectDeleteGL.innerHTML = '<option value="ALL">Toutes les périodes GL (Vider tout)</option>';
-      }
+      // 1. Uploaded FBL3N Months List (01-2025, 02-2025, ...)
+      const listGL = document.getElementById('listUploadedGLMonths');
+      const countGL = document.getElementById('countUploadedGLMonths');
+      if (Array.isArray(data.glPeriods)) {
+        if (countGL) {
+          countGL.textContent = `${data.glPeriods.length} mois`;
+        }
+        if (listGL) {
+          if (data.glPeriods.length === 0) {
+            listGL.innerHTML = '<div style="color: #64748b; font-size: 13px; text-align: center; padding: 16px;">Aucun mois importé.</div>';
+          } else {
+            listGL.innerHTML = data.glPeriods.map((p: any) => {
+              const moStr = String(p.fiscal_month).padStart(2, '0');
+              const yrStr = String(p.fiscal_year);
+              const label = `${moStr}-${yrStr}`;
+              const cnt = Number(p.count || 0).toLocaleString('fr-FR');
+              return `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border: 1px solid var(--border-light); border-radius: 8px; background: var(--slate-light);">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <span class="font-mono" style="font-weight: 700; font-size: 13.5px; color: var(--navy);">${label}</span>
+                    <span style="font-size: 12px; color: var(--slate);">${cnt} écritures</span>
+                  </div>
+                  <button type="button" class="btn btn-outline-danger btn-sm btn-delete-gl-month" data-year="${yrStr}" data-month="${p.fiscal_month}" style="padding: 4px 10px; font-size: 11.5px; font-weight: 600;">
+                    Supprimer
+                  </button>
+                </div>
+              `;
+            }).join('');
 
-      if (glEl && Array.isArray(data.glPeriods)) {
-        if (data.glPeriods.length === 0) {
-          glEl.textContent = 'Aucune écriture GL en base (prêt pour import)';
-        } else {
-          const totalRows = data.glPeriods.reduce((acc, p) => acc + (p.count || 0), 0);
-          const monthsList = data.glPeriods.map(p => `${String(p.fiscal_month).padStart(2, '0')}/${p.fiscal_year}`).join(', ');
-          glEl.textContent = `${totalRows.toLocaleString('fr-FR')} écritures (${data.glPeriods.length} mois : ${monthsList})`;
-
-          if (selectDeleteGL) {
-            data.glPeriods.forEach(p => {
-              const moNum = parseInt(p.fiscal_month, 10);
-              const yrNum = p.fiscal_year;
-              const moName = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'][moNum - 1] || `Mois ${moNum}`;
-              const label = `${String(moNum).padStart(2, '0')}/${yrNum}`;
-              const opt = document.createElement('option');
-              opt.value = label;
-              opt.textContent = `📅 ${label} (${moName} ${yrNum}) — ${Number(p.count || 0).toLocaleString('fr-FR')} écritures`;
-              selectDeleteGL.appendChild(opt);
+            listGL.querySelectorAll('.btn-delete-gl-month').forEach(btn => {
+              btn.addEventListener('click', async () => {
+                const yr = btn.getAttribute('data-year');
+                const mo = btn.getAttribute('data-month');
+                const label = `${String(mo).padStart(2, '0')}-${yr}`;
+                if (!confirm(`Supprimer les écritures FBL3N du mois ${label} ?`)) return;
+                (btn as HTMLButtonElement).disabled = true;
+                try {
+                  const delRes = await fetch('/api/import/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target: 'fbl3n', year: yr, month: mo })
+                  });
+                  const delData = await delRes.json();
+                  if (delData.success) {
+                    await loadImportSummary();
+                    await loadAvailableYears();
+                  } else {
+                    alert(delData.error || 'Erreur lors de la suppression');
+                  }
+                } finally {
+                  (btn as HTMLButtonElement).disabled = false;
+                }
+              });
             });
           }
         }
       }
 
-      // Balance summary
-      const balEl = document.getElementById('textBalanceSummary');
-      const selectDeleteBal = document.getElementById('selectDeleteBalancePeriod');
-      if (selectDeleteBal) {
-        selectDeleteBal.innerHTML = '<option value="ALL">Toutes les balances (Vider tout)</option>';
-      }
+      // 2. Uploaded Balance Periods List
+      const listBal = document.getElementById('listUploadedBalPeriods');
+      const countBal = document.getElementById('countUploadedBalPeriods');
+      if (Array.isArray(data.balPeriods)) {
+        if (countBal) {
+          countBal.textContent = `${data.balPeriods.length} période${data.balPeriods.length > 1 ? 's' : ''}`;
+        }
+        if (listBal) {
+          if (data.balPeriods.length === 0) {
+            listBal.innerHTML = '<div style="color: #64748b; font-size: 13px; text-align: center; padding: 16px;">Aucune balance importée.</div>';
+          } else {
+            listBal.innerHTML = data.balPeriods.map((p: any) => {
+              const cnt = Number(p.accounts_count || 0).toLocaleString('fr-FR');
+              return `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border: 1px solid var(--border-light); border-radius: 8px; background: var(--slate-light);">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <span class="font-mono" style="font-weight: 700; font-size: 13.5px; color: var(--navy);">${p.period_key}</span>
+                    <span style="font-size: 12px; color: var(--slate);">${cnt} comptes</span>
+                  </div>
+                  <button type="button" class="btn btn-outline-danger btn-sm btn-delete-bal-period" data-period="${p.period_key}" style="padding: 4px 10px; font-size: 11.5px; font-weight: 600;">
+                    Supprimer
+                  </button>
+                </div>
+              `;
+            }).join('');
 
-      if (balEl && Array.isArray(data.balPeriods)) {
-        if (data.balPeriods.length === 0) {
-          balEl.textContent = 'Aucun solde en base (prêt pour import)';
-        } else {
-          const pKeys = data.balPeriods.map(p => p.period_key).join(', ');
-          const totalAccounts = data.balPeriods.reduce((acc, p) => acc + (p.accounts_count || 0), 0);
-          balEl.textContent = `${data.balPeriods.length} périodes (${pKeys}) — ${totalAccounts} comptes enregistrés`;
-
-          if (selectDeleteBal) {
-            data.balPeriods.forEach(p => {
-              const opt = document.createElement('option');
-              opt.value = p.period_key;
-              opt.textContent = `Période ${p.period_key} (${Number(p.accounts_count || 0).toLocaleString('fr-FR')} comptes)`;
-              selectDeleteBal.appendChild(opt);
+            listBal.querySelectorAll('.btn-delete-bal-period').forEach(btn => {
+              btn.addEventListener('click', async () => {
+                const pk = btn.getAttribute('data-period');
+                if (!confirm(`Supprimer la balance de la période ${pk} ?`)) return;
+                (btn as HTMLButtonElement).disabled = true;
+                try {
+                  const delRes = await fetch('/api/import/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target: 'balance', periodKey: pk })
+                  });
+                  const delData = await delRes.json();
+                  if (delData.success) {
+                    await loadImportSummary();
+                    await loadAvailableYears();
+                  } else {
+                    alert(delData.error || 'Erreur lors de la suppression');
+                  }
+                } finally {
+                  (btn as HTMLButtonElement).disabled = false;
+                }
+              });
             });
           }
         }
