@@ -904,16 +904,6 @@ export class ReportingEngine {
       ? await this.getAccountsForReport(candidateYearN_1, targetMonth, source)
       : (new Map() as AccountMapWithMeta);
 
-    const hasData =
-      balN.size > 0 && Array.from(balN.values()).some((b) => Math.abs(b.solde) > 0.001);
-    const hasDataN1 =
-      candBalN1.size > 0 &&
-      Array.from(candBalN1.values()).some((b) => Math.abs(b.solde) > 0.001);
-
-    const hasN1 = Boolean(hasDataN1);
-    const yearN_1 = hasN1 ? candidateYearN_1 : null;
-    const balN1 = hasN1 ? candBalN1 : new Map<string, Record<string, any>>();
-
     const SUPPLEMENTAL_DZ: Record<string, ChartOfAccountEntry> = {
       '44080006': { dz: '602100000', desc: 'ACHATS CONSOMMES PIECES DETACHEES' },
       '43000000': { dz: '635100000', desc: 'ASSURANCE SOCIALE COTISATIONS' },
@@ -929,6 +919,27 @@ export class ReportingEngine {
       '83006016': { dz: '781100000', desc: 'REPRISES D EXPLOITATION' },
       '27930024': { dz: '681100000', desc: 'DOTATIONS AUX AMORTISSEMENTS (RECLASSEMENT)' }
     };
+
+    const isTcrAccount = (boal: string, item: Record<string, any>): boolean => {
+      const chart = this.chartOfAccounts.get(boal) || { dz: '', desc: '' };
+      const dz = String(chart.dz || SUPPLEMENTAL_DZ[boal]?.dz || item.dz || '').trim();
+      return dz.startsWith('6') || dz.startsWith('7');
+    };
+
+    const hasData =
+      balN.size > 0 &&
+      Array.from(balN.entries()).some(
+        ([boal, b]) => Math.abs(b.solde) > 0.001 && isTcrAccount(boal, b)
+      );
+    const hasDataN1 =
+      candBalN1.size > 0 &&
+      Array.from(candBalN1.entries()).some(
+        ([boal, b]) => Math.abs(b.solde) > 0.001 && isTcrAccount(boal, b)
+      );
+
+    const hasN1 = Boolean(hasDataN1);
+    const yearN_1 = hasN1 ? candidateYearN_1 : null;
+    const balN1 = hasN1 ? candBalN1 : new Map<string, Record<string, any>>();
 
     const sections: Record<
       string,
@@ -1053,39 +1064,9 @@ export class ReportingEngine {
       }
 
       if (targetKey && sections[targetKey]) {
-        let val26 = 0;
-        let val25 = 0;
-
-        if (targetKey === '70') {
-          const isRebate =
-            dz.startsWith('709') ||
-            boal === '83006003' ||
-            desc.toUpperCase().includes('RABAIS') ||
-            desc.toUpperCase().includes('RISTOURNE');
-          val26 = isRebate
-            ? solde26 > 0
-              ? -solde26
-              : solde26
-            : solde26 < 0
-              ? -solde26
-              : solde26;
-          val25 = isRebate
-            ? solde25 > 0
-              ? -solde25
-              : solde25
-            : solde25 < 0
-              ? -solde25
-              : solde25;
-        } else if (targetKey === '72') {
-          val26 = -solde26;
-          val25 = -solde25;
-        } else if (isCreditRevenue) {
-          val26 = solde26 < 0 ? -solde26 : solde26;
-          val25 = solde25 < 0 ? -solde25 : solde25;
-        } else {
-          val26 = solde26;
-          val25 = solde25;
-        }
+        const isClass7 = targetKey === '72' || isCreditRevenue;
+        const val26 = isClass7 ? -solde26 : solde26;
+        const val25 = hasN1 ? (isClass7 ? -solde25 : solde25) : 0;
 
         const accValN = val26;
         const accValN_1 = hasN1 ? val25 : null;
