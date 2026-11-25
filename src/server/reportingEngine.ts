@@ -926,7 +926,8 @@ export class ReportingEngine {
       '46900001': { dz: '625100000', desc: 'FRAIS SEMINAIRE, CONGRES' },
       '49600009': { dz: '624100000', desc: 'TRANSPORT MARCHANDISES SUR VENTES' },
       '44490000': { dz: '635200000', desc: 'ACCIDENT TRAVAIL MALADIE' },
-      '83006016': { dz: '781100000', desc: 'REPRISES D EXPLOITATION' }
+      '83006016': { dz: '781100000', desc: 'REPRISES D EXPLOITATION' },
+      '27930024': { dz: '681100000', desc: 'DOTATIONS AUX AMORTISSEMENTS (RECLASSEMENT)' }
     };
 
     const sections: Record<
