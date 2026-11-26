@@ -654,7 +654,8 @@ export class ReportingEngine {
   async getAccountsForReport(
     year: number | string,
     month: number | string = 'ALL',
-    source = 'balance'
+    source = 'balance',
+    cumulative = false
   ): Promise<AccountMapWithMeta> {
     const yearNum = parseInt(String(year), 10);
     const isAllMonths = !month || month === 'ALL';
@@ -735,7 +736,9 @@ export class ReportingEngine {
           WHERE f.fiscal_year = ${yearNum} AND f.doc_number <> ''
         `;
         if (monthNum !== null && !isNaN(monthNum)) {
-          sqlText += ` AND f.fiscal_month = ${monthNum}`;
+          sqlText += cumulative
+            ? ` AND f.fiscal_month <= ${monthNum}`
+            : ` AND f.fiscal_month = ${monthNum}`;
         }
         sqlText += ' GROUP BY f.account, c.scf_account, c.description';
 
@@ -749,7 +752,7 @@ export class ReportingEngine {
         }
 
         let openBalRows: Record<string, any>[] = [];
-        if (isAllMonths) {
+        if (isAllMonths || cumulative) {
           try {
             openBalRows = await sqlDb.query(`
               SELECT b.boal_account, b.report_initial, ISNULL(b.scf_account, c.scf_account) AS scf_account, ISNULL(b.account_desc, c.description) AS account_desc
@@ -893,15 +896,16 @@ export class ReportingEngine {
   async getTCRReport(
     targetYear: string | number = '2026',
     targetMonth: string | number = 'ALL',
-    source = 'balance'
+    source = 'balance',
+    cumulative = false
   ): Promise<Record<string, any>> {
     const yearNum = parseInt(String(targetYear), 10) || 2026;
     const yearN = yearNum;
     const candidateYearN_1 = yearNum - 1;
 
-    const balN = await this.getAccountsForReport(yearN, targetMonth, source);
+    const balN = await this.getAccountsForReport(yearN, targetMonth, source, cumulative);
     const candBalN1 = candidateYearN_1
-      ? await this.getAccountsForReport(candidateYearN_1, targetMonth, source)
+      ? await this.getAccountsForReport(candidateYearN_1, targetMonth, source, cumulative)
       : (new Map() as AccountMapWithMeta);
 
     const SUPPLEMENTAL_DZ: Record<string, ChartOfAccountEntry> = {
@@ -932,6 +936,7 @@ export class ReportingEngine {
         ([boal, b]) => Math.abs(b.solde) > 0.001 && isTcrAccount(boal, b)
       );
     const hasDataN1 =
+      hasData &&
       candBalN1.size > 0 &&
       Array.from(candBalN1.entries()).some(
         ([boal, b]) => Math.abs(b.solde) > 0.001 && isTcrAccount(boal, b)
@@ -1340,22 +1345,36 @@ export class ReportingEngine {
     const yearN = yearNum;
     const candidateYearN_1 = yearNum - 1;
 
-    const balN = await this.getAccountsForReport(yearN, targetMonth, source);
+    // Bilan is always cumulative from Jan 01 up to selected month (or full year)
+    const balN = await this.getAccountsForReport(yearN, targetMonth, source, true);
     const candBalN1 = candidateYearN_1
-      ? await this.getAccountsForReport(candidateYearN_1, targetMonth, source)
+      ? await this.getAccountsForReport(candidateYearN_1, targetMonth, source, true)
       : (new Map() as AccountMapWithMeta);
 
+    const isBilanAccount = (boal: string, item: Record<string, any>): boolean => {
+      const chart = this.chartOfAccounts.get(boal) || { dz: '', desc: '' };
+      const dz = String(chart.dz || item.dz || '').trim();
+      return ['1', '2', '3', '4', '5'].includes(dz.charAt(0));
+    };
+
     const hasData =
-      balN.size > 0 && Array.from(balN.values()).some((b) => Math.abs(b.solde) > 0.001);
+      balN.size > 0 &&
+      Array.from(balN.entries()).some(
+        ([boal, b]) => Math.abs(b.solde) > 0.001 && isBilanAccount(boal, b)
+      );
     const hasDataN1 =
+      hasData &&
       candBalN1.size > 0 &&
-      Array.from(candBalN1.values()).some((b) => Math.abs(b.solde) > 0.001);
+      Array.from(candBalN1.entries()).some(
+        ([boal, b]) => Math.abs(b.solde) > 0.001 && isBilanAccount(boal, b)
+      );
 
     const hasN1 = Boolean(hasDataN1);
     const yearN_1 = hasN1 ? candidateYearN_1 : null;
     const balN1 = hasN1 ? candBalN1 : new Map<string, Record<string, any>>();
 
-    const tcr = await this.getTCRReport(targetYear, targetMonth, source);
+    // Cumulative TCR for Net Income (12 - Résultat net de l'exercice)
+    const tcr = await this.getTCRReport(targetYear, targetMonth, source, true);
     const resNetN: number = tcr.kpis.resNetN || 0;
     const resNetN_1: number | null = hasN1 ? tcr.kpis.resNetN_1 || 0 : null;
 
@@ -1383,22 +1402,35 @@ export class ReportingEngine {
       accountList.push({ boal, dz, desc, soldeN, soldeN1 });
     });
 
-    const helperRow = (
+    type BilanAcc = (typeof accountList)[number];
+    const buildBilanRow = (
       code: string,
       label: string,
-      filterFn: (a: (typeof accountList)[number]) => boolean,
-      isAmort = false,
-      isPassif = false
+      filterFn: (a: BilanAcc) => boolean,
+      mode: 'actif' | 'actif_pos' | 'amort' | 'passif' | 'passif_cred' = 'actif'
     ): Record<string, any> => {
       const matched = accountList.filter(filterFn);
       const accounts = matched
         .map((a) => {
-          let valN = a.soldeN;
-          let valN1 = hasN1 ? a.soldeN1 : null;
-          if (isAmort || isPassif) {
-            valN = valN < 0 ? -valN : valN;
-            if (valN1 !== null) valN1 = valN1 < 0 ? -valN1 : valN1;
+          const sN = a.soldeN;
+          const sN1 = a.soldeN1;
+          let valN = 0;
+          let valN1: number | null = hasN1 ? 0 : null;
+
+          if (mode === 'actif') {
+            valN = sN;
+            if (hasN1 && sN1 !== null) valN1 = sN1;
+          } else if (mode === 'actif_pos') {
+            valN = sN > 0 ? sN : 0;
+            if (hasN1 && sN1 !== null) valN1 = sN1 > 0 ? sN1 : 0;
+          } else if (mode === 'amort' || mode === 'passif') {
+            valN = -sN;
+            if (hasN1 && sN1 !== null) valN1 = -sN1;
+          } else if (mode === 'passif_cred') {
+            valN = sN < 0 ? -sN : 0;
+            if (hasN1 && sN1 !== null) valN1 = sN1 < 0 ? -sN1 : 0;
           }
+
           return {
             boal: a.boal,
             dz: a.dz,
@@ -1413,7 +1445,8 @@ export class ReportingEngine {
           (a) =>
             Math.abs(a.valN) > 0.001 ||
             (hasN1 && a.valN_1 !== null && Math.abs(a.valN_1) > 0.001)
-        );
+        )
+        .sort((a, b) => Math.abs(b.valN) - Math.abs(a.valN));
 
       const brutN = accounts.reduce((s, a) => s + a.valN, 0);
       const brutN1 = hasN1 ? accounts.reduce((s, a) => s + (a.valN_1 || 0), 0) : null;
@@ -1421,143 +1454,205 @@ export class ReportingEngine {
       return { code, label, brutN, brutN1, brut26: brutN, brut25: brutN1, accounts };
     };
 
-    const rowLogiciels = helperRow('204', 'Logiciels informatiques et assimilés', (a) =>
+    // --- ACTIF NON COURANT ---
+    const rowLogiciels = buildBilanRow('204', 'Immobilisations incorporelles (Logiciels)', (a) =>
       a.dz.startsWith('20')
     );
-    const rowLogicielsAmort = helperRow(
+    const rowLogicielsAmort = buildBilanRow(
       '280',
-      'Amortissements logiciels',
-      (a) => a.dz.startsWith('280'),
-      true
+      'Amortissements immo. incorporelles',
+      (a) => a.dz.startsWith('280') || a.dz.startsWith('290'),
+      'amort'
     );
-    const rowCorp = helperRow('21', 'Autres immobilisations corporelles', (a) =>
-      a.dz.startsWith('21')
+    const rowCorp = buildBilanRow(
+      '21',
+      'Immobilisations corporelles',
+      (a) => a.dz.startsWith('21') || a.dz.startsWith('22')
     );
-    const rowCorpAmort = helperRow(
+    const rowCorpAmort = buildBilanRow(
       '281',
-      'Amortissements immob. corporelles',
-      (a) => a.dz.startsWith('281'),
-      true
+      'Amortissements immo. corporelles',
+      (a) =>
+        a.dz.startsWith('281') ||
+        a.dz.startsWith('282') ||
+        a.dz.startsWith('291') ||
+        a.dz.startsWith('292'),
+      'amort'
     );
-    const rowEncours = helperRow('23', 'Immobilisations en cours', (a) => a.dz.startsWith('23'));
-    const rowAutresTitres: Record<string, any> = {
-      code: '26',
-      label: 'Autres titres immobilisés',
-      brutN: 0,
-      brutN1: 0,
-      brut26: 0,
-      brut25: 0,
-      amortN: 0,
-      amort26: 0,
-      netN: 0,
-      netN_1: 0,
-      net26: 0,
-      net25: 0,
-      accounts: []
-    };
-    const rowPrets = helperRow('27', 'Prêts et autres actifs financiers non courants', (a) =>
-      a.dz.startsWith('27')
+    const rowEncours = buildBilanRow('23', 'Immobilisations en cours', (a) => a.dz.startsWith('23'));
+    const rowAutresTitres = buildBilanRow('26', 'Autres titres immobilisés', (a) =>
+      a.dz.startsWith('26')
     );
-    const rowImpotsDiffAct = helperRow('133', 'Impôts différés actif', (a) =>
-      a.dz.startsWith('133')
+    const rowPrets = buildBilanRow(
+      '27',
+      'Prêts et autres actifs financiers non courants',
+      (a) => a.dz.startsWith('27')
+    );
+    const rowImpotsDiffAct = buildBilanRow(
+      '133',
+      'Impôts différés actif',
+      (a) => a.dz.startsWith('13'),
+      'actif_pos'
     );
 
-    const rowStocks = helperRow(
+    // --- ACTIF COURANT ---
+    const rowStocks = buildBilanRow(
       '3',
       'Stocks et encours',
       (a) => a.dz.startsWith('3') && !a.dz.startsWith('39')
     );
-    const rowStocksProv = helperRow(
+    const rowStocksProv = buildBilanRow(
       '39',
       'Pertes de valeur sur stocks',
       (a) => a.dz.startsWith('39'),
-      true
+      'amort'
     );
-    const rowClients = helperRow(
+    const rowClients = buildBilanRow(
       '41',
       'Créances clients et comptes rattachés',
-      (a) => a.dz.startsWith('411') || a.dz.startsWith('413') || a.dz.startsWith('418')
+      (a) =>
+        a.dz.startsWith('411') ||
+        a.dz.startsWith('413') ||
+        a.dz.startsWith('416') ||
+        a.dz.startsWith('417') ||
+        a.dz.startsWith('418') ||
+        a.dz.startsWith('419'),
+      'actif_pos'
     );
-    const rowClientsProv = helperRow(
+    const rowClientsProv = buildBilanRow(
       '49',
       'Pertes de valeur sur clients',
       (a) => a.dz.startsWith('49'),
-      true
+      'amort'
     );
-    const rowAutresDeb = helperRow('409', 'Autres débiteurs (Acomptes versés)', (a) =>
-      a.dz.startsWith('409')
-    );
-    const rowImpotsAct = helperRow(
-      '44_ACT',
-      'Impôts et assimilés (Acomptes IBS, TVA)',
+    const rowAutresDeb = buildBilanRow(
+      '409',
+      'Autres débiteurs (Fournisseurs débiteurs & acomptes)',
       (a) =>
-        (a.dz.startsWith('44841') || a.dz.startsWith('4441')) &&
-        (a.soldeN > 0 || (a.soldeN1 ?? 0) > 0)
+        a.dz.startsWith('409') ||
+        a.dz.startsWith('401') ||
+        a.dz.startsWith('403') ||
+        a.dz.startsWith('404') ||
+        a.dz.startsWith('405') ||
+        a.dz.startsWith('408'),
+      'actif_pos'
     );
-    const rowAutresCreances = helperRow('486', 'Autres créances et emplois assimilés', (a) =>
-      a.dz.startsWith('486')
+    const rowImpotsAct = buildBilanRow(
+      '44_ACT',
+      'Impôts et assimilés (Acomptes IBS, TVA récupérable)',
+      (a) => a.dz.startsWith('44'),
+      'actif_pos'
     );
-    const rowTreso = helperRow(
+    const rowAutresCreances = buildBilanRow(
+      '486',
+      'Autres créances et emplois assimilés',
+      (a) =>
+        a.dz.startsWith('486') ||
+        a.dz.startsWith('42') ||
+        a.dz.startsWith('43') ||
+        a.dz.startsWith('45') ||
+        a.dz.startsWith('46') ||
+        a.dz.startsWith('47') ||
+        a.dz.startsWith('487'),
+      'actif_pos'
+    );
+    const rowTreso = buildBilanRow(
       '5',
-      'Trésorerie et disponibilités',
-      (a) => (a.dz.startsWith('51') || a.dz.startsWith('53')) && (a.soldeN > 0 || (a.soldeN1 ?? 0) > 0)
+      'Trésorerie et disponibilités (Banques, Caisses, Accréditifs)',
+      (a) =>
+        a.dz.startsWith('50') ||
+        a.dz.startsWith('51') ||
+        a.dz.startsWith('52') ||
+        a.dz.startsWith('53') ||
+        a.dz.startsWith('54') ||
+        a.dz.startsWith('58'),
+      'actif_pos'
     );
 
-    const rowCapital = helperRow(
+    // --- PASSIF ---
+    const rowCapital = buildBilanRow(
       '101',
       'Capital émis / Capital social',
-      (a) => a.dz.startsWith('101'),
-      false,
-      true
+      (a) => a.dz.startsWith('101') || a.dz.startsWith('108'),
+      'passif'
     );
-    const rowReserves = helperRow(
+    const rowReserves = buildBilanRow(
       '106',
-      'Primes et réserves consolidées',
-      (a) => a.dz.startsWith('106'),
-      false,
-      true
+      'Primes, réserves et report à nouveau',
+      (a) =>
+        a.dz.startsWith('103') ||
+        a.dz.startsWith('104') ||
+        a.dz.startsWith('105') ||
+        a.dz.startsWith('106') ||
+        a.dz.startsWith('11') ||
+        a.dz.startsWith('12'),
+      'passif'
     );
-    const rowProvisionsNC = helperRow(
+    const rowProvisionsNC = buildBilanRow(
       '15',
-      "Provisions et produits constatés d'avance",
-      (a) => a.dz.startsWith('15'),
-      false,
-      true
+      "Provisions, dettes financières & produits constatés d'avance",
+      (a) =>
+        a.dz.startsWith('14') ||
+        a.dz.startsWith('15') ||
+        a.dz.startsWith('16') ||
+        a.dz.startsWith('17'),
+      'passif'
     );
-    const rowFournisseurs = helperRow(
+    const rowImpotsDiffPass = buildBilanRow(
+      '134',
+      'Impôts différés passif',
+      (a) => a.dz.startsWith('13'),
+      'passif_cred'
+    );
+    const rowFournisseurs = buildBilanRow(
       '40',
       'Fournisseurs et comptes rattachés',
       (a) =>
-        (a.dz.startsWith('401') || a.dz.startsWith('404') || a.dz.startsWith('408')) &&
-        (a.soldeN < 0 || (a.soldeN1 ?? 0) < 0),
-      false,
-      true
+        a.dz.startsWith('401') ||
+        a.dz.startsWith('403') ||
+        a.dz.startsWith('404') ||
+        a.dz.startsWith('405') ||
+        a.dz.startsWith('408') ||
+        a.dz.startsWith('409'),
+      'passif_cred'
     );
-    const rowImpotsPass = helperRow(
+    const rowImpotsPass = buildBilanRow(
       '44_PAS',
-      'Impôts (Dettes fiscales)',
-      (a) =>
-        a.dz.startsWith('44') &&
-        !a.dz.startsWith('44841') &&
-        !a.dz.startsWith('4441') &&
-        (a.soldeN < 0 || (a.soldeN1 ?? 0) < 0),
-      false,
-      true
+      'Impôts (Dettes fiscales & TVA à payer)',
+      (a) => a.dz.startsWith('44'),
+      'passif_cred'
     );
-    const rowAutresDettes = helperRow(
+    const rowAutresDettes = buildBilanRow(
       '4X_DET',
-      'Autres dettes (Personnel, Sécu, Avances, Dividendes)',
+      'Autres dettes (Personnel, Sécu, Clients créditeurs, Créditeurs divers)',
       (a) =>
-        (a.dz.startsWith('419') ||
-          a.dz.startsWith('42') ||
-          a.dz.startsWith('43') ||
-          a.dz.startsWith('457') ||
-          a.dz.startsWith('46') ||
-          a.dz.startsWith('47') ||
-          a.dz.startsWith('487')) &&
-        (a.soldeN < 0 || (a.soldeN1 ?? 0) < 0),
-      false,
-      true
+        a.dz.startsWith('411') ||
+        a.dz.startsWith('413') ||
+        a.dz.startsWith('416') ||
+        a.dz.startsWith('417') ||
+        a.dz.startsWith('418') ||
+        a.dz.startsWith('419') ||
+        a.dz.startsWith('42') ||
+        a.dz.startsWith('43') ||
+        a.dz.startsWith('45') ||
+        a.dz.startsWith('46') ||
+        a.dz.startsWith('47') ||
+        a.dz.startsWith('486') ||
+        a.dz.startsWith('487'),
+      'passif_cred'
+    );
+    const rowTresoPassif = buildBilanRow(
+      '519',
+      'Trésorerie Passif (Concours bancaires courants)',
+      (a) =>
+        a.dz.startsWith('50') ||
+        a.dz.startsWith('51') ||
+        a.dz.startsWith('52') ||
+        a.dz.startsWith('53') ||
+        a.dz.startsWith('54') ||
+        a.dz.startsWith('58') ||
+        a.dz.startsWith('59'),
+      'passif_cred'
     );
 
     const setActifRow = (
@@ -1585,15 +1680,15 @@ export class ReportingEngine {
       rowLogiciels,
       rowLogiciels.brutN,
       rowLogicielsAmort.brutN,
-      Math.max(0, rowLogiciels.brutN - rowLogicielsAmort.brutN),
-      Math.max(0, (rowLogiciels.brutN1 || 0) - (rowLogicielsAmort.brutN1 || 0))
+      rowLogiciels.brutN - rowLogicielsAmort.brutN,
+      hasN1 ? (rowLogiciels.brutN1 || 0) - (rowLogicielsAmort.brutN1 || 0) : null
     );
     setActifRow(
       rowCorp,
       rowCorp.brutN,
       rowCorpAmort.brutN,
-      Math.max(0, rowCorp.brutN - rowCorpAmort.brutN),
-      Math.max(0, (rowCorp.brutN1 || 0) - (rowCorpAmort.brutN1 || 0))
+      rowCorp.brutN - rowCorpAmort.brutN,
+      hasN1 ? (rowCorp.brutN1 || 0) - (rowCorpAmort.brutN1 || 0) : null
     );
     setActifRow(rowEncours, rowEncours.brutN, 0, rowEncours.brutN, rowEncours.brutN1);
     setActifRow(
@@ -1616,15 +1711,15 @@ export class ReportingEngine {
       rowStocks,
       rowStocks.brutN,
       rowStocksProv.brutN,
-      Math.max(0, rowStocks.brutN - rowStocksProv.brutN),
-      Math.max(0, (rowStocks.brutN1 || 0) - (rowStocksProv.brutN1 || 0))
+      rowStocks.brutN - rowStocksProv.brutN,
+      hasN1 ? (rowStocks.brutN1 || 0) - (rowStocksProv.brutN1 || 0) : null
     );
     setActifRow(
       rowClients,
       rowClients.brutN,
       rowClientsProv.brutN,
-      Math.max(0, rowClients.brutN - rowClientsProv.brutN),
-      Math.max(0, (rowClients.brutN1 || 0) - (rowClientsProv.brutN1 || 0))
+      rowClients.brutN - rowClientsProv.brutN,
+      hasN1 ? (rowClients.brutN1 || 0) - (rowClientsProv.brutN1 || 0) : null
     );
     setActifRow(rowAutresDeb, rowAutresDeb.brutN, 0, rowAutresDeb.brutN, rowAutresDeb.brutN1);
     setActifRow(rowImpotsAct, rowImpotsAct.brutN, 0, rowImpotsAct.brutN, rowImpotsAct.brutN1);
@@ -1766,9 +1861,11 @@ export class ReportingEngine {
     setPassifRow(rowReserves, rowReserves.brutN, rowReserves.brutN1);
     setPassifRow(rowResultatNet, resNetN, resNetN_1);
     setPassifRow(rowProvisionsNC, rowProvisionsNC.brutN, rowProvisionsNC.brutN1);
+    setPassifRow(rowImpotsDiffPass, rowImpotsDiffPass.brutN, rowImpotsDiffPass.brutN1);
     setPassifRow(rowFournisseurs, rowFournisseurs.brutN, rowFournisseurs.brutN1);
     setPassifRow(rowImpotsPass, rowImpotsPass.brutN, rowImpotsPass.brutN1);
     setPassifRow(rowAutresDettes, rowAutresDettes.brutN, rowAutresDettes.brutN1);
+    setPassifRow(rowTresoPassif, rowTresoPassif.brutN, rowTresoPassif.brutN1);
 
     const totalCapitauxPropres: Record<string, any> = {
       code: 'TOT_CP',
@@ -1790,8 +1887,8 @@ export class ReportingEngine {
     const totalPassifNonCourant: Record<string, any> = {
       code: 'TOT_PNC',
       label: 'TOTAL II — PASSIFS NON COURANTS',
-      montantN: rowProvisionsNC.montantN,
-      montantN_1: hasN1 ? rowProvisionsNC.montantN_1 : null
+      montantN: rowProvisionsNC.montantN + rowImpotsDiffPass.montantN,
+      montantN_1: hasN1 ? rowProvisionsNC.montantN_1 + rowImpotsDiffPass.montantN_1 : null
     };
     totalPassifNonCourant.net26 = totalPassifNonCourant.montantN;
     totalPassifNonCourant.net25 = totalPassifNonCourant.montantN_1;
@@ -1806,9 +1903,15 @@ export class ReportingEngine {
       code: 'TOT_PC',
       label: 'TOTAL III — PASSIFS COURANTS',
       montantN:
-        rowFournisseurs.montantN + rowImpotsPass.montantN + rowAutresDettes.montantN,
+        rowFournisseurs.montantN +
+        rowImpotsPass.montantN +
+        rowAutresDettes.montantN +
+        rowTresoPassif.montantN,
       montantN_1: hasN1
-        ? rowFournisseurs.montantN_1 + rowImpotsPass.montantN_1 + rowAutresDettes.montantN_1
+        ? rowFournisseurs.montantN_1 +
+          rowImpotsPass.montantN_1 +
+          rowAutresDettes.montantN_1 +
+          rowTresoPassif.montantN_1
         : null
     };
     totalPassifCourant.net26 = totalPassifCourant.montantN;
@@ -1849,17 +1952,24 @@ export class ReportingEngine {
         totalPassifNonCourant.montantN_1 -
         totalNonCourant.netN_1
       : null;
-    const bfrN = totalCourant.netN - rowTreso.netN - totalPassifCourant.montantN;
+    const bfrN =
+      totalCourant.netN -
+      rowTreso.netN -
+      (totalPassifCourant.montantN - rowTresoPassif.montantN);
     const bfrN1 = hasN1
-      ? totalCourant.netN_1 - rowTreso.netN_1 - totalPassifCourant.montantN_1
+      ? totalCourant.netN_1 -
+        rowTreso.netN_1 -
+        (totalPassifCourant.montantN_1 - rowTresoPassif.montantN_1)
       : null;
 
-    const monthSuffix = targetMonth && targetMonth !== 'ALL' ? ` (Mois ${targetMonth})` : '';
+    const monthSuffix =
+      targetMonth && targetMonth !== 'ALL' ? ` (Cumul 01-${String(targetMonth).padStart(2, '0')})` : '';
 
     return {
       hasData,
       hasN1,
       hasComparison: hasN1,
+      month: String(targetMonth || 'ALL'),
       sourceUsed: balN.effectiveSource || source,
       source: balN.effectiveSource || source,
       company: 'SENSUS ALGERIE SPA',
@@ -1921,9 +2031,9 @@ export class ReportingEngine {
       passif: {
         capitauxPropres: [rowCapital, rowReserves, rowResultatNet],
         totalCapitauxPropres,
-        nonCourant: [rowProvisionsNC],
+        nonCourant: [rowProvisionsNC, rowImpotsDiffPass],
         totalNonCourant: totalPassifNonCourant,
-        courant: [rowFournisseurs, rowImpotsPass, rowAutresDettes],
+        courant: [rowFournisseurs, rowImpotsPass, rowAutresDettes, rowTresoPassif],
         totalCourant: totalPassifCourant,
         totalGeneral: totalGeneralPassif
       }

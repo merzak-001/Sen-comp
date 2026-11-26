@@ -523,7 +523,8 @@ function setSelectedYear(year) {
 
   // Reload current active page to apply the year filter
   const currentRoute = window.location.hash || window.location.pathname;
-  const pageId = getPageIdFromRoute(currentRoute);
+  const activeSection = document.querySelector('.page-section.active');
+  const pageId = activeSection?.id || getPageIdFromRoute(currentRoute);
 
   if (pageId === 'page-achats') {
     loadAchatsPage();
@@ -569,7 +570,8 @@ function setSelectedMonth(month) {
 
   // Reload current active page to apply the month filter
   const currentRoute = window.location.hash || window.location.pathname;
-  const pageId = getPageIdFromRoute(currentRoute);
+  const activeSection = document.querySelector('.page-section.active');
+  const pageId = activeSection?.id || getPageIdFromRoute(currentRoute);
 
   if (pageId === 'page-achats') {
     loadAchatsPage();
@@ -2214,6 +2216,7 @@ async function loadTCRPage(forceRefresh = false) {
     if (json.success === false) throw new Error(json.error || 'Erreur API');
 
     AppState.tcrData = json.tcr || json;
+    AppState.tcrData.month = targetMonth;
     const effectiveSource = (json.tcr && (json.tcr.sourceUsed || json.tcr.source)) || source;
     AppState.tcrData.source = effectiveSource;
     if (json.tcr && json.tcr.sourceUsed) {
@@ -2616,6 +2619,7 @@ async function loadBilanPage(forceReload = false) {
     }
 
     AppState.bilanData = json.bilan;
+    AppState.bilanData.month = targetMonth;
     const effectiveSource = (json.bilan && (json.bilan.sourceUsed || json.bilan.source)) || source;
     AppState.bilanData.source = effectiveSource;
     if (json.bilan && json.bilan.sourceUsed) {
@@ -2667,10 +2671,13 @@ function renderBilanTables(data) {
     if (!data.hasData) {
       elHeaderSub.innerHTML = `<span style="color:#d97706; font-weight:700;">⚠️ Aucune écriture enregistrée en base pour le mois sélectionné — Soldes à 0,00 DA.</span>`;
     } else {
-      const srcDesc = activeSource === 'gl' ? 'Grand Livre FBL3N (Écritures individuelles)' : 'Balance Générale RFSSLD00 (Soldes cumulés)';
+      const srcDesc = activeSource === 'gl' ? 'Grand Livre FBL3N (Cumul à fin de période)' : 'Balance Générale RFSSLD00 (Soldes cumulés)';
+      const periodText = (selectedMonth && selectedMonth !== 'ALL')
+        ? `Cumul 01-${String(selectedMonth).padStart(2, '0')}/${yearN}`
+        : `Exercice ${yearN}`;
       elHeaderSub.textContent = hasN1
-        ? `Situation patrimoniale officielle (Série G nº2) • Comparatif Exercice ${yearN} (N) vs Exercice ${yearN1} (N-1) • Source : ${srcDesc}.`
-        : `Situation patrimoniale officielle (Série G nº2) • Données Officielles Exercice ${yearN} (N) • Source : ${srcDesc}.`;
+        ? `Situation patrimoniale officielle (Série G nº2) • ${periodText} vs ${yearN1} (N-1) • Source : ${srcDesc}.`
+        : `Situation patrimoniale officielle (Série G nº2) • ${periodText} (N) • Source : ${srcDesc}.`;
     }
   }
 
@@ -2790,7 +2797,7 @@ function renderBilanTables(data) {
 
     const renderActifSection = (title, rows, totalRow) => {
       let sHtml = `
-        <tr style="background-color:#f1f5f9; font-weight:700; color:#0f172a; border-top:2px solid #cbd5e1; border-bottom:1px solid #cbd5e1;">
+        <tr class="bilan-section-row">
           <td colspan="${hasN1 ? 8 : 6}" style="padding:8px 12px; font-size:13px; letter-spacing:0.3px;">
             ${title}
           </td>
@@ -2826,7 +2833,7 @@ function renderBilanTables(data) {
 
         if (hasN1) {
           sHtml += `
-            <tr style="background-color:#ffffff; border-bottom:1px solid #f1f5f9;">
+            <tr class="bilan-item-row">
               <td style="text-align:center;"><span class="font-mono text-muted" style="font-size:11px;">${r.code}</span></td>
               <td><strong>${r.label}</strong></td>
               <td style="text-align:right;" class="font-mono">${formatFromDA(brutN, false)}</td>
@@ -2839,7 +2846,7 @@ function renderBilanTables(data) {
           `;
         } else {
           sHtml += `
-            <tr style="background-color:#ffffff; border-bottom:1px solid #f1f5f9;">
+            <tr class="bilan-item-row">
               <td style="text-align:center;"><span class="font-mono text-muted" style="font-size:11px;">${r.code}</span></td>
               <td><strong>${r.label}</strong></td>
               <td style="text-align:right;" class="font-mono">${formatFromDA(brutN, false)}</td>
@@ -2947,7 +2954,7 @@ function renderBilanTables(data) {
       const pctGColor = pctG >= 0 ? '#059669' : '#e11d48';
 
       htmlActif += `
-        <tr style="background-color:#eff6ff; font-weight:800; border-top:2.5px solid #2563eb; border-bottom:3px double #1d4ed8; font-size:13.5px; color:#1e40af;">
+        <tr class="bilan-grand-total-row">
           <td style="text-align:center;"><span class="badge badge-purple font-mono" style="font-weight:700;">TOTAL</span></td>
           <td>${totG.label}</td>
           <td style="text-align:right;" class="font-mono">${formatFromDA(gBrutN, false)}</td>
@@ -2960,7 +2967,7 @@ function renderBilanTables(data) {
       `;
     } else {
       htmlActif += `
-        <tr style="background-color:#eff6ff; font-weight:800; border-top:2.5px solid #2563eb; border-bottom:3px double #1d4ed8; font-size:13.5px; color:#1e40af;">
+        <tr class="bilan-grand-total-row">
           <td style="text-align:center;"><span class="badge badge-purple font-mono" style="font-weight:700;">TOTAL</span></td>
           <td>${totG.label}</td>
           <td style="text-align:right;" class="font-mono">${formatFromDA(gBrutN, false)}</td>
@@ -2982,7 +2989,7 @@ function renderBilanTables(data) {
 
     const renderPassifSection = (title, rows, totalRow, borderColor = '#16a34a', badgeClass = 'badge-emerald') => {
       let sHtml = `
-        <tr style="background-color:#f1f5f9; font-weight:700; color:#0f172a; border-top:2px solid #cbd5e1; border-bottom:1px solid #cbd5e1;">
+        <tr class="bilan-section-row">
           <td colspan="${hasN1 ? 6 : 4}" style="padding:8px 12px; font-size:13px; letter-spacing:0.3px;">
             ${title}
           </td>
@@ -3016,7 +3023,7 @@ function renderBilanTables(data) {
 
         if (hasN1) {
           sHtml += `
-            <tr style="background-color:#ffffff; border-bottom:1px solid #f1f5f9;">
+            <tr class="bilan-item-row">
               <td style="text-align:center;"><span class="font-mono text-muted" style="font-size:11px;">${r.code}</span></td>
               <td><strong>${r.label}</strong></td>
               <td style="text-align:right; font-weight:700; color:#15803d;" class="font-mono">${formatFromDA(montantN, false)}</td>
@@ -3027,7 +3034,7 @@ function renderBilanTables(data) {
           `;
         } else {
           sHtml += `
-            <tr style="background-color:#ffffff; border-bottom:1px solid #f1f5f9;">
+            <tr class="bilan-item-row">
               <td style="text-align:center;"><span class="font-mono text-muted" style="font-size:11px;">${r.code}</span></td>
               <td><strong>${r.label}</strong></td>
               <td style="text-align:right; font-weight:700; color:#15803d;" class="font-mono">${formatFromDA(montantN, false)}</td>

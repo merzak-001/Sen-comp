@@ -4,6 +4,7 @@
    ========================================================================== */
 
 :root {
+  color-scheme: light;
   /* Brand Corporate Colors */
   --navy: #091e3a;
   --navy-deep: #061325;
@@ -3316,6 +3317,7 @@ body.role-restricted #page-fournisseurs {
 
 /* Dark Theme Variables */
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg-app: #090e17;
   --card-bg: #0f172a;
   --slate-dark: #f8fafc;
@@ -3656,4 +3658,82 @@ input[type="text"]:focus, select:focus {
   .executive-controls-group {
     gap: 6px;
   }
+}
+
+/* ==========================================================================
+   EXECUTIVE FINANCIAL TABLES (TCR & BILAN) — LIGHT & DARK MODE
+   ========================================================================== */
+.bilan-section-row {
+  background-color: var(--slate-light);
+  font-weight: 700;
+  color: var(--slate-dark);
+  border-top: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.bilan-item-row {
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background-color 0.15s ease;
+}
+
+.bilan-item-row:hover {
+  background-color: var(--slate-light);
+}
+
+.bilan-total-row {
+  background-color: var(--slate-light);
+  font-weight: 700;
+  border-top: 1.5px solid var(--blue-primary);
+  border-bottom: 1.5px solid var(--blue-primary);
+}
+
+.bilan-grand-total-row {
+  background-color: #eff6ff;
+  font-weight: 800;
+  border-top: 2.5px solid #2563eb;
+  border-bottom: 3px double #1d4ed8;
+  font-size: 13.5px;
+  color: #1e40af;
+}
+
+.bilan-account-subrow,
+.tcr-account-subrow {
+  background-color: var(--slate-light);
+  font-size: 12px;
+}
+
+[data-theme="dark"] .bilan-section-row {
+  background-color: #1e293b;
+  color: #f1f5f9;
+  border-top-color: #334155;
+  border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .bilan-item-row {
+  background-color: #0f172a;
+  color: #e2e8f0;
+  border-bottom-color: #1e293b;
+}
+
+[data-theme="dark"] .bilan-item-row:hover {
+  background-color: #1e293b;
+}
+
+[data-theme="dark"] .bilan-total-row {
+  background-color: #172554;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .bilan-grand-total-row {
+  background-color: #1e3a8a;
+  color: #f8fafc;
+  border-top-color: #3b82f6;
+  border-bottom-color: #60a5fa;
+}
+
+[data-theme="dark"] .bilan-account-subrow,
+[data-theme="dark"] .tcr-account-subrow {
+  background-color: #0b1120 !important;
+  color: #cbd5e1;
 }
